@@ -22,20 +22,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .header-title{font-size:17px;font-weight:700;color:#E8C97E}
 .header-sub{font-size:12px;color:#B0BAD4;margin-top:2px}
 .header-badge{background:#C9A84C;color:#0D1B3E;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap}
-.container{max-width:1400px;margin:0 auto;padding:0}
-/* 좌우 분할 레이아웃 */
-.split-wrap{display:flex;align-items:flex-start;min-height:calc(100vh - 60px)}
-.split-left{flex:0 0 54%;max-width:54%;padding:20px 18px 40px;overflow-y:auto;height:calc(100vh - 60px);position:sticky;top:0}
-.split-right{flex:0 0 46%;max-width:46%;padding:20px 18px 40px;overflow-y:auto;height:calc(100vh - 60px);position:sticky;top:0;border-left:1px solid var(--border);background:var(--bg3)}
+.container{width:100%;margin:0;padding:0}
+/* 좌우 분할 레이아웃 — 전체 화면 활용 */
+.split-wrap{display:flex;align-items:flex-start;min-height:calc(100vh - 60px);width:100%}
+.split-left{flex:1 1 55%;min-width:0;padding:20px 24px 40px;overflow-y:auto;height:calc(100vh - 60px);position:sticky;top:0}
+.split-right{flex:1 1 45%;min-width:0;padding:20px 24px 40px;overflow-y:auto;height:calc(100vh - 60px);position:sticky;top:0;border-left:1px solid var(--border);background:var(--bg3)}
 /* 모바일: 세로 스크롤로 전환 */
 @media(max-width:900px){
   .split-wrap{flex-direction:column}
-  .split-left,.split-right{flex:none;max-width:100%;width:100%;height:auto;position:static;padding:16px 12px 24px;border-left:none}
+  .split-left,.split-right{flex:none;width:100%;height:auto;position:static;padding:16px 14px 24px;border-left:none}
   .split-right{border-top:2px solid var(--border)}
 }
+/* 시나리오 탭 — 밝은 배경에서 텍스트 가시성 */
+.sc-btn.act-a{background:#EBF3FF;color:#185FA5}
+.sc-btn.act-a span{color:#185FA5 !important;opacity:1 !important}
+.sc-btn.act-b{background:#FAECE7;color:#993C1D}
+.sc-btn.act-b span{color:#993C1D !important;opacity:1 !important}
+.sc-btn.act-c{background:#FFF3CD;color:#7A5800}
+.sc-btn.act-c span{color:#7A5800 !important;opacity:1 !important}
+/* 시나리오 헤더 — 밝은 배경 텍스트 */
+.sh-a,.sh-a *:not([style*="color"]){color:#185FA5}
+.sh-b,.sh-b *:not([style*="color"]){color:#993C1D}
+.sh-c,.sh-c *:not([style*="color"]){color:#7A5800}
 .phase{margin-bottom:20px}
 .pt{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--border)}
-.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px}
 .ic{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 13px}
 .il{font-size:12px;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline}
 .iv{font-size:13px;font-weight:600;color:var(--text)}
@@ -405,14 +416,14 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 <div class="pt" style="margin-bottom:13px;font-size:12px">결과 — 시나리오 선택 <span style="font-size:10px;color:var(--text3);font-weight:400">(입력 변경 시 실시간 업데이트)</span></div>
 
 <div class="sc-tabs">
-  <button class="sc-btn act-a" id="tab-a" onclick="switchTab('a')">A — 부부 함께<br><span style="font-size:11px;font-weight:400">기준 시나리오</span><span class="stag tag-a">기준</span><br><span style="font-size:11px;opacity:.7" id="tab-a-p">—</span></button>
-  <button class="sc-btn" id="tab-b" onclick="switchTab('b')">B — 본인 먼저 사망<br><span style="font-size:11px;font-weight:400">배우자 홀로</span><span class="stag tag-b">배우자 리스크</span><br><span style="font-size:11px;opacity:.7" id="tab-b-p">—</span></button>
-  <button class="sc-btn" id="tab-c" onclick="switchTab('c')">C — 배우자 먼저 사망<br><span style="font-size:11px;font-weight:400">본인 홀로</span><span class="stag tag-c">본인 리스크</span><br><span style="font-size:11px;opacity:.7" id="tab-c-p">—</span></button>
+  <button class="sc-btn act-a" id="tab-a" onclick="switchTab('a')">A — 부부 함께<br><span style="font-size:11px;font-weight:400;color:inherit">기준 시나리오</span><span class="stag tag-a">기준</span><br><span style="font-size:11px;color:inherit" id="tab-a-p">—</span></button>
+  <button class="sc-btn" id="tab-b" onclick="switchTab('b')">B — 본인 먼저 사망<br><span style="font-size:11px;font-weight:400;color:inherit">배우자 홀로</span><span class="stag tag-b">배우자 리스크</span><br><span style="font-size:11px;color:inherit" id="tab-b-p">—</span></button>
+  <button class="sc-btn" id="tab-c" onclick="switchTab('c')">C — 배우자 먼저 사망<br><span style="font-size:11px;font-weight:400;color:inherit">본인 홀로</span><span class="stag tag-c">본인 리스크</span><br><span style="font-size:11px;color:inherit" id="tab-c-p">—</span></button>
 </div>
 
 <!-- 패널 A -->
 <div class="rp active" id="panel-a">
-  <div class="sh sh-a"><b>시나리오 A — 부부/동반 함께 생존</b><br><span id="sh-a-desc" style="color:#185FA5;font-size:12px">—</span></div>
+  <div class="sh sh-a"><b style="color:#0C3D6E">시나리오 A — 부부/동반 함께 생존</b><br><span id="sh-a-desc" style="color:#185FA5;font-size:12px">—</span></div>
   <div class="rb">
     <div class="met"><div class="ml">은퇴 시점 예상 자산</div><div class="mv" id="a-asset">—</div><div class="ms" id="a-asset-s">—</div></div>
     <div class="met"><div class="ml">1년차 인출률</div><div class="mv" id="a-rate">—</div><div class="ms" id="a-rate-s">—</div></div>
@@ -435,7 +446,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 
 <!-- 패널 B -->
 <div class="rp" id="panel-b">
-  <div class="sh sh-b"><b>시나리오 B — 본인 먼저 사망 → 배우자 홀로</b><br><span id="sh-b-desc" style="color:#993C1D;font-size:12px">—</span></div>
+  <div class="sh sh-b"><b style="color:#6B2010">시나리오 B — 본인 먼저 사망 → 배우자 홀로</b><br><span id="sh-b-desc" style="color:#993C1D;font-size:12px">—</span></div>
   <div class="ic" style="margin-bottom:11px">
     <div class="il">본인 사망 시점 (독립 조절) <span class="iv" id="l-me-death">은퇴 후 15년</span></div>
     <input type="range" id="me-death" min="1" max="64" step="1" value="15">
@@ -467,7 +478,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 
 <!-- 패널 C -->
 <div class="rp" id="panel-c">
-  <div class="sh sh-c"><b>시나리오 C — 배우자 먼저 사망 → 본인 홀로</b><br><span id="sh-c-desc" style="color:#7A5800;font-size:12px">—</span></div>
+  <div class="sh sh-c"><b style="color:#4A3200">시나리오 C — 배우자 먼저 사망 → 본인 홀로</b><br><span id="sh-c-desc" style="color:#7A5800;font-size:12px">—</span></div>
   <div class="ic" style="margin-bottom:11px">
     <div class="il">배우자 사망 시점 (독립 조절) <span class="iv" id="l-sp-death">은퇴 후 10년</span></div>
     <input type="range" id="sp-death" min="1" max="64" step="1" value="10">
