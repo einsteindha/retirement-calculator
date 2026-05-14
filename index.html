@@ -397,7 +397,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
     <div style="font-size:13px;font-weight:600;margin-bottom:10px">단계별 현금 버퍼 계산</div>
     <div style="overflow-x:auto">
       <table class="cf-table" id="buf-table">
-        <thead><tr><th>단계</th><th>월 생활비</th><th>공적연금·수입 차감</th><th>월 인출 필요액</th><th>버퍼 기간</th><th>필요 버퍼</th><th></th></tr></thead>
+        <thead><tr><th>구간</th><th>상황</th><th>공적연금 수령액</th><th>월 인출 필요액</th><th>버퍼 기간</th><th>필요 버퍼</th><th></th></tr></thead>
         <tbody id="buf-body"></tbody>
       </table>
     </div>
@@ -534,44 +534,25 @@ let events=[],cashflows=[],fixedPensions=[],inflows=[];
 
 // ── 인생 단계 정의 (4,5번 수정 반영)
 const STAGES=[
-  {id:'gap_me',    label:'본인 소득공백기',   color:'#E74C3C',bg:'#FDEDEC',tc:'#A93226',desc:'본인 은퇴 후 공적연금 수령 전 공백',defaultYrs:3,defaultMon:280,solo:false,autoCalc:true,who:'me'},
-  {id:'gap_sp',    label:'배우자 소득공백기', color:'#D85A30',bg:'#FAECE7',tc:'#993C1D',desc:'배우자 은퇴 후 공적연금 수령 전 공백',defaultYrs:5,defaultMon:280,solo:false,autoCalc:true,who:'sp'},
-  {id:'active',    label:'활동기',            color:'#378ADD',bg:'#EBF3FF',tc:'#185FA5',desc:'건강하게 활발히 활동하는 시기',defaultYrs:10,defaultMon:300,solo:false,autoCalc:false,who:null},
-  {id:'recall',    label:'회상기',            color:'#8B5CF6',bg:'#F3EFFE',tc:'#5B21B6',desc:'활동이 줄고 집에서 보내는 시간이 늘어나는 시기',defaultYrs:8,defaultMon:240,solo:false,autoCalc:false,who:null},
-  {id:'care',      label:'간병기',            color:'#BA7517',bg:'#FFF3CD',tc:'#7A5800',desc:'의료·간병 비용 증가 시기',defaultYrs:5,defaultMon:320,solo:false,autoCalc:false,who:null},
-  {id:'solo_active',label:'독거 활동기',      color:'#1D9E75',bg:'#E1F5EE',tc:'#0F6E56',desc:'홀로 남아 활동하는 시기',defaultYrs:8,defaultMon:200,solo:true,autoCalc:false,who:null},
-  {id:'solo_care', label:'독거 간병기',       color:'#5F5E5A',bg:'#F1EFE8',tc:'#2C2C2A',desc:'홀로 남아 의료·간병 비용 발생 시기',defaultYrs:5,defaultMon:250,solo:true,autoCalc:false,who:null},
+  {id:'active',    label:'활동기',   color:'#378ADD',bg:'#EBF3FF',tc:'#185FA5',desc:'건강하게 활발히 활동하는 시기 (공적연금 수령 전후 자동 반영)',defaultYrs:15,defaultMon:300,solo:false,who:null},
+  {id:'recall',    label:'회상기',   color:'#8B5CF6',bg:'#F3EFFE',tc:'#5B21B6',desc:'활동이 줄고 집에서 보내는 시간이 늘어나는 시기',defaultYrs:8,defaultMon:240,solo:false,who:null},
+  {id:'care',      label:'간병기',   color:'#BA7517',bg:'#FFF3CD',tc:'#7A5800',desc:'의료·간병 비용 증가 시기',defaultYrs:5,defaultMon:320,solo:false,who:null},
+  {id:'solo_active',label:'독거 활동기',color:'#1D9E75',bg:'#E1F5EE',tc:'#0F6E56',desc:'홀로 남아 활동하는 시기 (독거 공적연금 자동 반영)',defaultYrs:10,defaultMon:200,solo:true,who:null},
+  {id:'solo_care', label:'독거 간병기',color:'#5F5E5A',bg:'#F1EFE8',tc:'#2C2C2A',desc:'홀로 남아 의료·간병 비용 발생 시기',defaultYrs:5,defaultMon:250,solo:true,who:null},
 ];
 let stageState={};
 STAGES.forEach(s=>{
-  // 소득공백기: 본인은 기본 ON, 배우자는 기본 OFF (배우자 토글 ON 시 자동 활성화)
-  const defaultOn = ['active','recall','gap_me'].includes(s.id);
-  stageState[s.id]={on:defaultOn,yrs:s.defaultYrs,mon:s.defaultMon,manualOverride:false};
+  stageState[s.id]={on:['active','recall'].includes(s.id),yrs:s.defaultYrs,mon:s.defaultMon};
 });
-
-// 소득공백기 자동 계산
-function calcGapYears(who){
-  const retAge=who==='me'?+$('retire').value:+$('sp-retire').value;
-  const pensionAge=who==='me'?getPensionStartAge('me'):getPensionStartAge('sp');
-  return Math.max(0, pensionAge-retAge);
-}
-function getPensionStartAge(who){
-  const mode=who==='me'?meMode:spMode;
-  if(mode==='early') return +$(who==='me'?'me-early':'sp-early').value;
-  if(mode==='defer') return +$(who==='me'?'me-defer':'sp-defer').value;
-  return 65;
-}
 
 function buildStageGrid(){
   const grid=$('stage-grid');grid.innerHTML='';
   STAGES.forEach(s=>{
     const st=stageState[s.id];
     const row=document.createElement('div');row.className='stage-row';
-    const autoNote=s.autoCalc?`<span style="font-size:10px;color:var(--text3);margin-left:4px">(공적연금 수령 시기 자동 연동)</span>`:'';
     row.innerHTML=`
       <div class="stage-header">
         <span class="stage-badge" style="background:${s.bg};color:${s.tc}">${s.label}</span>
-        ${autoNote}
         <span style="font-size:11px;color:var(--text2)">${s.desc}</span>
         <div class="stage-toggle" onclick="toggleStage('${s.id}')">
           <div class="mini-tr ${st.on?'on':''}" id="str-${s.id}"><div class="mini-th"></div></div>
@@ -581,7 +562,7 @@ function buildStageGrid(){
       <div class="stage-body ${st.on?'open':''}" id="sbody-${s.id}">
         <div class="stage-inputs">
           <div class="ic">
-            <div class="il">기간 <span class="iv" id="styr-lbl-${s.id}">${st.yrs}년</span>${s.autoCalc?`<span id="styr-auto-${s.id}" style="font-size:10px;color:var(--blue);margin-left:4px"></span>`:''}</div>
+            <div class="il">기간 <span class="iv" id="styr-lbl-${s.id}">${st.yrs}년</span></div>
             <input type="range" id="styr-${s.id}" min="0" max="65" step="1" value="${st.yrs}" oninput="stageYrInput('${s.id}',this.value)">
           </div>
           <div class="ic">
@@ -602,51 +583,8 @@ function toggleStage(id){
   $('sbody-'+id).classList.toggle('open',on);
   update();
 }
-function stageYrInput(id,val){
-  stageState[id].yrs=+val;
-  stageState[id].manualOverride=true;
-  $('styr-lbl-'+id).textContent=val+'년';
-  const autoEl=$('styr-auto-'+id);
-  if(autoEl) autoEl.textContent='(수동 조정)';
-  update();
-}
+function stageYrInput(id,val){stageState[id].yrs=+val;$('styr-lbl-'+id).textContent=val+'년';update();}
 function stageMonInput(id,val){stageState[id].mon=+val;$('stmon-lbl-'+id).textContent=val+'만원';update();}
-
-// 소득공백기 자동 연동 업데이트
-function syncGapYears(){
-  ['me','sp'].forEach(who=>{
-    const sid=who==='me'?'gap_me':'gap_sp';
-
-    // 배우자 소득공백기: 배우자 없으면 무조건 OFF
-    if(who==='sp'&&!hasSp){
-      stageState[sid].on=false;
-      stageState[sid].yrs=0;
-      const trEl=$('str-'+sid);const lblEl=$('stlbl-'+sid);const bodyEl=$('sbody-'+sid);
-      if(trEl) trEl.classList.remove('on');
-      if(lblEl) lblEl.textContent='OFF';
-      if(bodyEl) bodyEl.classList.remove('open');
-      return;
-    }
-
-    if(stageState[sid].manualOverride) return; // 수동 수정한 경우 자동 연동 안 함
-
-    const autoYrs=calcGapYears(who);
-    stageState[sid].yrs=autoYrs;
-    // 공백 기간이 0이면 자동 OFF, 1 이상이면 자동 ON
-    stageState[sid].on = autoYrs > 0;
-
-    // UI 업데이트
-    const trEl=$('str-'+sid);const lblEl=$('stlbl-'+sid);
-    const bodyEl=$('sbody-'+sid);const sliderEl=$('styr-'+sid);
-    const sliderLblEl=$('styr-lbl-'+sid);const autoEl=$('styr-auto-'+sid);
-    if(trEl) trEl.classList.toggle('on', stageState[sid].on);
-    if(lblEl) lblEl.textContent=stageState[sid].on?'ON':'OFF';
-    if(bodyEl) bodyEl.classList.toggle('open', stageState[sid].on);
-    if(sliderEl) sliderEl.value=autoYrs;
-    if(sliderLblEl) sliderLblEl.textContent=autoYrs+'년';
-    if(autoEl) autoEl.textContent=autoYrs>0?`(자동: ${autoYrs}년)`:'(공백 없음)';
-  });
-}
 
 // 단계 기간 제한 (5번 수정)
 function clampStageYears(retireAge,meLife,spLife,meDeathY,spDeathY){
@@ -868,18 +806,6 @@ function toggleSp(){
   $('solo-pension-phase').style.display=hasSp?'block':'none';
   $('cmp3').style.display=hasSp?'grid':'none';
   $('solo-pension-grid').style.gridTemplateColumns=hasSp?'1fr 1fr':'1fr';
-  // 배우자 소득공백기 표시/숨김
-  const gapSpRow=document.getElementById('sbody-gap_sp')?.closest('.stage-row');
-  if(gapSpRow) gapSpRow.style.display=hasSp?'':'none';
-  // 배우자 OFF 시 gap_sp 수동 override 리셋 후 강제 OFF
-  if(!hasSp){
-    stageState['gap_sp'].manualOverride=false;
-    stageState['gap_sp'].on=false;
-    stageState['gap_sp'].yrs=0;
-  } else {
-    // 배우자 ON 시 수동 override 리셋하여 자동 계산 재활성화
-    stageState['gap_sp'].manualOverride=false;
-  }
   update();
 }
 function setMode(who,mode){
@@ -887,9 +813,6 @@ function setMode(who,mode){
   ['early','normal','defer'].forEach(m=>$(who+'-'+m[0]+'-btn').className='tb '+m+(m===mode?' active':''));
   $(who+'-ec').style.display=mode==='early'?'block':'none';
   $(who+'-dc').style.display=mode==='defer'?'block':'none';
-  // 소득공백기 자동 연동 리셋 (수동 아닌 경우)
-  const sid=who==='me'?'gap_me':'gap_sp';
-  stageState[sid].manualOverride=false;
   update();
 }
 function switchTab(t){['a','b','c'].forEach(x=>{$('tab-'+x).className='sc-btn'+(x===t?' act-'+t:'');$('panel-'+x).className='rp'+(x===t?' active':'');});}
@@ -910,14 +833,14 @@ function buildW(stages,pensions,years,infl,evts,retireAge){
   return Array.from({length:years},(_,i)=>{
     const inflFactor=Math.pow(1+infl/100,i+1);
     const living=monByY[i]*12;
-    const totalP=pensions.reduce((s,p)=>s+(i>=p.startY?p.amt*12:0),0);
-    // 추가 수입 (현금흐름 물가연동 + 정액연금 명목고정)
+    // 연도별 공적연금 수령 여부 (수령 시작 연도 기준 — 자동 반영)
+    let totalP=0;
+    pensions.forEach(p=>{ if(i>=p.startY) totalP+=p.amt*12; });
     const ageAtY=retireAge+i;
     let extraCF=0,extraFP=0;
     cashflows.forEach(cf=>{const end=cf.endAge>0?cf.endAge:200;if(ageAtY>=cf.startAge&&ageAtY<end)extraCF+=cf.amt*12;});
     fixedPensions.forEach(fp=>{const end=fp.endAge>0?fp.endAge:200;if(ageAtY>=fp.startAge&&ageAtY<end)extraFP+=fp.amt*12;});
     const evtCost=evts.filter(e=>{const ey=e.age-retireAge;return ey>=0&&Math.floor(ey)===i;}).reduce((s,e)=>s+e.amt*Math.pow(1+infl/100,e.age-retireAge),0);
-    // 인출 필요액 = (생활비 - 공적연금 - 현금흐름수입(물가연동)) × inflFactor - 정액연금(명목) + 이벤트
     const netMonthly=Math.max(0,living-totalP-extraCF);
     return netMonthly*inflFactor - extraFP*12 + evtCost;
   }).map(v=>Math.max(0,v));
@@ -969,7 +892,8 @@ function renderCFTable(bodyId,stages,pensions,infl,evts,retireAge){
     const s=stageState[st.id];const yS=cursor,yE=cursor+s.yrs-1;
     const ageS=retireAge+yS,ageE=retireAge+yE;
     const midY=(yS+yE)/2;
-    const totalP=pensions.reduce((sum,p)=>sum+(midY>=p.startY?p.amt:0),0);
+    let totalP=0;
+    pensions.forEach(p=>{ if(midY>=p.startY) totalP+=p.amt; });
     const ageAtMid=retireAge+Math.floor(midY);
     let extraIncome=0;
     cashflows.forEach(cf=>{const end=cf.endAge>0?cf.endAge:200;if(ageAtMid>=cf.startAge&&ageAtMid<end)extraIncome+=cf.amt;});
@@ -991,8 +915,6 @@ function renderCFTable(bodyId,stages,pensions,infl,evts,retireAge){
 
 function update(){
   updateSoloPensionTotals();
-  syncGapYears();
-
   const age=+$('age').value,retAge=+$('retire').value;
   const assetNow=+$('asset').value*10000,saveYr=+$('save').value;
   const spAge=+$('sp-age').value,spRet=+$('sp-retire').value,spSave=+$('sp-save').value;
@@ -1088,48 +1010,107 @@ function update(){
   const pensionsA=hasSp?[{startY:mePstartY,amt:meP.amt},{startY:spPstartY,amt:spP.amt}]:[{startY:mePstartY,amt:meP.amt}];
   const stagesA=STAGES.filter(s=>!s.solo);
 
-  function calcStageBuf(stages, pensions, retireAge, bufYrs){
+  // ── 시점 기반 소득공백기 구간 계산 (버퍼 + 테이블)
+  // 4개 시점: 본인은퇴(T_meRet), 배우자은퇴(T_spRet), 본인연금(T_meP), 배우자연금(T_spP)
+  // → 정렬 후 중복 제거 → 구간 자동 생성 → 각 구간별 수령 연금 정확히 반영
+  function calcBufBySegments(retireAge, meRetireAge, spRetireAge, meP, spP, bufYrs, living, infl){
     const bufMonths = bufYrs * 12;
-    const activeS = stages.filter(s => stageState[s.id].on);
-    let cursor = 0;
-    let maxBuf = 0;
+
+    // 본인 은퇴 기준 연도로 환산
+    const T = {
+      meRet : 0,                                    // 본인 은퇴 = 0년차 기준
+      spRet : hasSp ? spRetireAge - retireAge : null, // 배우자 은퇴
+      mePen : meP.sa - retireAge,                   // 본인 연금 개시
+      spPen : hasSp ? spP.sa - retireAge : null,    // 배우자 연금 개시
+    };
+
+    // 구간 경계 시점 수집 (은퇴 ~ 두 사람 모두 연금 개시 완료까지)
+    const milestones = new Set([0]);
+    if(T.spRet !== null && T.spRet > 0) milestones.add(T.spRet);
+    milestones.add(T.mePen);
+    if(T.spPen !== null) milestones.add(T.spPen);
+
+    // 정렬 후 구간 생성
+    const points = [...milestones].sort((a,b)=>a-b);
+    const segments = [];
+    for(let i=0; i<points.length-1; i++){
+      segments.push({ from: points[i], to: points[i+1] });
+    }
+    // 마지막 시점 이후 구간은 버퍼 계산 불필요 (모든 연금 수령 중)
+
     const rows = [];
-    activeS.forEach(st => {
-      const s = stageState[st.id];
-      const midY = cursor + s.yrs / 2;
-      const totalP = pensions.reduce((sum, p) => sum + (midY >= p.startY ? p.amt : 0), 0);
-      const ageAtMid = retireAge + Math.floor(midY);
+    let maxBuf = 0;
+
+    segments.forEach(seg => {
+      const midY = (seg.from + seg.to) / 2;
+      const ageAtMid = retireAge + midY;
+
+      // 해당 구간에서 수령 중인 연금 계산
+      let pension = 0;
+      // 본인 연금: midY >= mePen 이면 수령
+      if(midY >= T.mePen) pension += meP.amt;
+      // 배우자 연금: midY >= spPen 이면 수령 (배우자 있을 때만)
+      if(hasSp && T.spPen !== null && midY >= T.spPen) pension += spP.amt;
+
+      // 구간 설명 레이블
+      let desc = '';
+      const bothRetired = !hasSp || (seg.from >= Math.max(0, T.spRet||0));
+      const meHasPen = midY >= T.mePen;
+      const spHasPen = hasSp && T.spPen !== null && midY >= T.spPen;
+
+      if(!meHasPen && (!hasSp || !spHasPen)){
+        desc = hasSp ? '부부 모두 공적연금 미수령' : '본인 공적연금 미수령';
+      } else if(meHasPen && hasSp && !spHasPen){
+        desc = '본인 연금 수령 중, 배우자 미수령';
+      } else if(!meHasPen && hasSp && spHasPen){
+        desc = '배우자 연금 수령 중, 본인 미수령';
+      } else {
+        desc = hasSp ? '부부 모두 공적연금 수령 중' : '본인 공적연금 수령 중';
+      }
+
+      // 현금흐름·정액연금 추가 수입
       let extraIncome = 0;
       cashflows.forEach(cf => { const end=cf.endAge>0?cf.endAge:200; if(ageAtMid>=cf.startAge&&ageAtMid<end) extraIncome+=cf.amt; });
       fixedPensions.forEach(fp => { const end=fp.endAge>0?fp.endAge:200; if(ageAtMid>=fp.startAge&&ageAtMid<end) extraIncome+=fp.amt; });
-      const totalIncome = totalP + extraIncome;
-      const netMon = Math.max(0, s.mon - totalIncome);
-      const stageBuf = netMon * bufMonths;
-      if(stageBuf > maxBuf) maxBuf = stageBuf;
-      rows.push({ stage: st, mon: s.mon, income: totalIncome, netMon, stageBuf });
-      cursor += s.yrs;
+
+      const totalIncome = pension + extraIncome;
+      const netMon = Math.max(0, living - totalIncome);
+      const segBuf = netMon * bufMonths;
+      if(segBuf > maxBuf) maxBuf = segBuf;
+
+      rows.push({
+        from: seg.from, to: seg.to,
+        fromAge: retireAge + seg.from, toAge: retireAge + seg.to,
+        yrs: seg.to - seg.from,
+        desc, pension, extraIncome, totalIncome, netMon, segBuf
+      });
     });
+
     return { maxBuf, rows };
   }
 
-  const { maxBuf, rows: bufRows } = calcStageBuf(stagesA, pensionsA, retAge, buf);
+  // 버퍼 계산에 쓸 생활비: 첫 활성 부부 단계의 월 생활비 기준
+  const coupleStagesActive = STAGES.filter(s=>!s.solo&&stageState[s.id].on);
+  const bufLiving = coupleStagesActive.length ? stageState[coupleStagesActive[0].id].mon : 250;
+
+  const { maxBuf, rows: bufRows } = calcBufBySegments(retAge, retAge, hasSp?+$('sp-retire').value:retAge, meP, spP, buf, bufLiving, infl);
   const bufAmt = maxBuf;
 
   // 버퍼 테이블 렌더
   const bufBody = $('buf-body');
   bufBody.innerHTML = '';
   bufRows.forEach(r => {
-    const isMax = r.stageBuf === maxBuf && maxBuf > 0;
+    const isMax = r.segBuf === maxBuf && maxBuf > 0;
     const tr = document.createElement('tr');
     if(isMax) tr.style.background = 'rgba(55,138,221,0.06)';
     tr.innerHTML = `
-      <td><span class="cf-stage-label" style="background:${r.stage.bg};color:${r.stage.tc}">${r.stage.label}</span></td>
-      <td>${r.mon}만원</td>
-      <td>${r.income > 0 ? '-' + r.income + '만원' : '—'}</td>
+      <td style="font-size:11px;font-weight:500">${r.fromAge}세 → ${r.toAge}세</td>
+      <td style="font-size:11px;color:var(--text2)">${r.desc}</td>
+      <td>${r.pension > 0 ? r.pension+'만원' : '—'}</td>
       <td style="font-weight:600">${r.netMon}만원</td>
       <td>${buf}년 (${buf*12}개월)</td>
-      <td style="font-weight:700;color:${isMax?'var(--blue)':'var(--text)'}">${fmtW(r.stageBuf)}${isMax?' ← 최대':'  '}</td>
-      <td style="font-size:10px;color:var(--text3)">${isMax?'▶ 기준':'  '}</td>`;
+      <td style="font-weight:700;color:${isMax?'var(--blue)':'var(--text)'}">${fmtW(r.segBuf)}${isMax?' ← 최대':''}</td>
+      <td style="font-size:10px;color:var(--text3)">${isMax?'▶ 기준':''}</td>`;
     bufBody.appendChild(tr);
   });
   $('buf-max').textContent = fmtW(bufAmt);
@@ -1270,11 +1251,6 @@ renderCashflows();
 renderFixedPensions();
 $('ls-grid').style.gridTemplateColumns='1fr';
 $('pw').style.gridTemplateColumns='1fr';
-// 배우자 소득공백기: 초기에는 숨김 (배우자 ON 시 표시)
-const gapSpRow=document.getElementById('sbody-gap_sp')?.closest('.stage-row');
-if(gapSpRow) gapSpRow.style.display='none';
-// 소득공백기 초기 자동 계산값으로 설정
-syncGapYears();
 update();
 </script>
 </body>
