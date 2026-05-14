@@ -329,6 +329,15 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
   <div style="font-size:12px;color:var(--text2);padding:6px 10px;background:var(--bg2);border-radius:var(--radius);margin-top:9px" id="event-total">이벤트 없음</div>
 </div>
 
+<!-- 8-1. 일시 자산 유입 -->
+<div class="phase">
+  <div class="pt">8-1 · 일시 자산 유입 (상속·증여·부동산 매각 등)</div>
+  <div class="sn" style="margin-bottom:9px">상속, 증여, 부동산 매각 등 은퇴 중 특정 시점에 한 번 들어오는 목돈을 입력하세요. 해당 연도 자산에 직접 추가됩니다. 현재 물가 기준으로 입력하면 물가상승률이 자동 반영됩니다.</div>
+  <div class="flow-list" id="inflow-list"></div>
+  <button class="add-btn" onclick="addInflow()">+ 자산 유입 추가</button>
+  <div style="font-size:12px;color:var(--text2);padding:6px 10px;background:var(--bg2);border-radius:var(--radius);margin-top:9px" id="inflow-total">자산 유입 없음</div>
+</div>
+
 <!-- 9. 현금흐름 수입 -->
 <div class="phase">
   <div class="pt">9 · 추가 현금흐름 수입 (주택연금·월세 등 정기 수입)</div>
@@ -491,8 +500,8 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 const $=id=>document.getElementById(id);
 let cA=null,cB=null,cC=null;
 let hasSp=false,meMode='normal',spMode='normal',portMode='simple';
-let eventId=0,cashflowId=0,fixedPensionId=0;
-let events=[],cashflows=[],fixedPensions=[];
+let eventId=0,cashflowId=0,fixedPensionId=0,inflowId=0;
+let events=[],cashflows=[],fixedPensions=[],inflows=[];
 
 // ── 인생 단계 정의 (4,5번 수정 반영)
 const STAGES=[
@@ -720,6 +729,30 @@ function renderFixedPensions(){
 }
 function fpU(id,f,v){const e=fixedPensions.find(x=>x.id===id);if(e){e[f]=v;update();}}
 
+// ── 일시 자산 유입 (8-1번)
+function addInflow(){
+  const id=++inflowId;
+  inflows.push({id,label:'상속',age:70,amt:10000});
+  renderInflows();update();
+}
+function removeInflow(id){inflows=inflows.filter(e=>e.id!==id);renderInflows();update();}
+function renderInflows(){
+  const list=$('inflow-list');list.innerHTML='';
+  if(!inflows.length){list.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0">자산 유입 없음</div>';return;}
+  inflows.forEach(e=>{
+    const row=document.createElement('div');row.className='flow-item';
+    row.innerHTML=`<div class="flow-grid flow-grid-3">
+      <div><div class="flow-label">유입 이름</div><input class="flow-input" type="text" value="${e.label}" oninput="inflowU(${e.id},'label',this.value)"></div>
+      <div><div class="flow-label">본인 나이 (유입 시점)</div><input class="flow-input" type="number" min="40" max="105" value="${e.age}" oninput="inflowU(${e.id},'age',+this.value)"></div>
+      <div><div class="flow-label">금액 (현재 물가 기준, 만원)</div><input class="flow-input" type="number" min="100" max="1000000" step="100" value="${e.amt}" oninput="inflowU(${e.id},'amt',+this.value)"></div>
+      <button class="del-btn" onclick="removeInflow(${e.id})">×</button>
+    </div>
+    <div class="sn" style="margin-top:6px">해당 나이 시점 자산에 직접 추가됩니다. 물가상승률이 자동 반영되어 미래가치로 계산됩니다.</div>`;
+    list.appendChild(row);
+  });
+}
+function inflowU(id,f,v){const e=inflows.find(x=>x.id===id);if(e){e[f]=v;update();}}
+
 // 현금흐름·정액연금 연도별 월 수입액 계산
 function getExtraIncome(yearIdx, retireAge){
   const ageAtY=retireAge+yearIdx;
@@ -861,16 +894,26 @@ function buildW(stages,pensions,years,infl,evts,retireAge){
   }).map(v=>Math.max(0,v));
 }
 
-function deterPath(start,w,ret,yrs){
+function deterPath(start,w,ret,yrs,inflowArr=[]){
   let b=start;const p=[b];
-  for(let y=1;y<=yrs;y++){b=b*(1+ret/100)-w[y-1];p.push(Math.max(0,b));}
+  for(let y=1;y<=yrs;y++){
+    b=b*(1+ret/100)-w[y-1];
+    // 해당 연도 자산 유입 추가
+    if(inflowArr[y-1]) b+=inflowArr[y-1];
+    p.push(Math.max(0,b));
+  }
   return p;
 }
-function mc(start,w,ret,vol,yrs,inherit,runs=1200){
+function mc(start,w,ret,vol,yrs,inherit,inflowArr=[],runs=1200){
   let ok=0;
   for(let i=0;i<runs;i++){
     let b=start,alive=true;
-    for(let y=1;y<=yrs;y++){const r=ret+(Math.random()*2-1)*vol*1.5;b=b*(1+r/100)-w[y-1];if(b<0){alive=false;break;}}
+    for(let y=1;y<=yrs;y++){
+      const r=ret+(Math.random()*2-1)*vol*1.5;
+      b=b*(1+r/100)-w[y-1];
+      if(inflowArr[y-1]) b+=inflowArr[y-1];
+      if(b<0){alive=false;break;}
+    }
     if(alive&&b>=inherit)ok++;
   }
   return ok/runs;
@@ -979,6 +1022,17 @@ function update(){
   $('cashflow-total').textContent=cashflows.length>0?`현금흐름 ${cashflows.length}건 — 최대 월 ${totalCF}만원`:'현금흐름 수입 없음';
   const totalFP=fixedPensions.reduce((s,fp)=>s+fp.amt,0);
   $('fixedpension-total').textContent=fixedPensions.length>0?`정액 연금 ${fixedPensions.length}건 — 최대 월 ${totalFP}만원`:'정액 연금 없음';
+  // 일시 자산 유입 집계
+  const totalInflowFV=inflows.reduce((s,e)=>{const ey=e.age-retAge;return s+(ey>=0?e.amt*Math.pow(1+infl/100,ey):0);},0);
+  $('inflow-total').textContent=inflows.length>0?`자산 유입 ${inflows.length}건 — 미래가치 합계 ${fmtW(totalInflowFV)}`:'자산 유입 없음';
+  // 연도별 inflow 배열 (periodA 기준)
+  function buildInflowArr(years, retireAge){
+    return Array.from({length:years},(_,i)=>{
+      const ageAtY=retireAge+i;
+      return inflows.filter(e=>Math.floor(e.age)===ageAtY&&e.age>=retireAge)
+        .reduce((s,e)=>s+e.amt*Math.pow(1+infl/100,e.age-retireAge),0);
+    });
+  }
 
   $('ls-summary').innerHTML=hasSp?`A: ${periodA}년 · B: 배우자 잔여 ${periodB}년 · C: 본인 잔여 ${periodC}년`:`본인 은퇴 기간 <b>${mePeriod}년</b>`;
   $('tab-a-p').textContent=periodA+'년 계획';
@@ -1056,14 +1110,15 @@ function update(){
 
   // ── A
   const wA=buildW(stagesA,pensionsA,periodA,infl,events,retAge);
+  const inflowArrA=buildInflowArr(periodA,retAge);
   const rateA=investable>0?(wA[0]/investable)*100:0;
-  const probA=Math.round(mc(investable,wA,ret,vol,periodA,inherit)*100);
+  const probA=Math.round(mc(investable,wA,ret,vol,periodA,inherit,inflowArrA)*100);
   const avgWA=wA.reduce((a,b)=>a+b,0)/wA.length;
   const pvFA=(1-Math.pow(1+netRet/100,-periodA))/(netRet/100);
   const neededA=avgWA*pvFA+inherit*Math.pow(1+netRet/100,-periodA)+bufAmt;
   const gapA=assetAtRet-neededA;
 
-  $('sh-a-desc').textContent=`부부/동반 기준, ${periodA}년 계획. 이벤트 ${events.length}건 · 현금흐름 ${cashflows.length}건 · 정액연금 ${fixedPensions.length}건 포함.`;
+  $('sh-a-desc').textContent=`부부/동반 기준, ${periodA}년 계획. 이벤트 ${events.length}건 · 자산유입 ${inflows.length}건 · 현금흐름 ${cashflows.length}건 · 정액연금 ${fixedPensions.length}건 포함.`;
   $('a-asset').textContent=fmtW(assetAtRet);$('a-asset-s').textContent=ytr+'년 후 예상';
   $('a-rate').textContent=rateA.toFixed(2)+'%';$('a-rate').className='mv '+rateClass(rateA);$('a-rate-s').textContent=rateA<3.5?'안전':rateA<5?'주의':'위험';
   $('a-prob').textContent=probA+'%';$('a-prob').className='mv '+probClass(probA);$('a-prob-s').textContent=probA>=90?'목표 달성':probA>=70?'보완 필요':'재설계 필요';
@@ -1072,13 +1127,16 @@ function update(){
   renderCFTable('cf-body-a',stagesA,pensionsA,infl,events,retAge);
   const labA=Array.from({length:periodA+1},(_,i)=>i===0?'은퇴':i+'년');
   cA=drawC('chart-a',[
-    {label:'낙관',data:deterPath(investable,wA,ret+2,periodA),borderColor:'#1D9E75',borderWidth:2,pointRadius:0,fill:false,tension:.3},
-    {label:'기본',data:deterPath(investable,wA,ret,periodA),borderColor:'#378ADD',borderWidth:2.5,pointRadius:0,fill:false,tension:.3},
-    {label:'비관',data:deterPath(investable,wA,ret-2,periodA),borderColor:'#D85A30',borderWidth:2,pointRadius:0,fill:false,tension:.3},
+    {label:'낙관',data:deterPath(investable,wA,ret+2,periodA,inflowArrA),borderColor:'#1D9E75',borderWidth:2,pointRadius:0,fill:false,tension:.3},
+    {label:'기본',data:deterPath(investable,wA,ret,periodA,inflowArrA),borderColor:'#378ADD',borderWidth:2.5,pointRadius:0,fill:false,tension:.3},
+    {label:'비관',data:deterPath(investable,wA,ret-2,periodA,inflowArrA),borderColor:'#D85A30',borderWidth:2,pointRadius:0,fill:false,tension:.3},
   ],labA,cA);
-  $('note-a').textContent=`▲ ${mePstartY}년차 본인 공적연금`+(hasSp?` · ● ${spPstartY}년차 배우자 공적연금`:'');
+  // 유입 시점 차트 주석
+  const inflowYears=inflows.filter(e=>e.age>=retAge&&e.age<retAge+periodA).map(e=>Math.floor(e.age-retAge));
+  const inflowNote=inflowYears.length>0?`  |  ★ 자산유입: ${[...new Set(inflowYears)].map(y=>y+'년차').join(', ')}`:'';
+  $('note-a').textContent=`▲ ${mePstartY}년차 본인 공적연금`+(hasSp?` · ● ${spPstartY}년차 배우자 공적연금`:'')+inflowNote;
   let msgA='',clsA='';
-  if(probA>=90&&rateA<=4){clsA='ok';msgA=`<span class="tag tok">안전</span> ${periodA}년 계획에서 인출률 <b>${rateA.toFixed(2)}%</b>, 생존 확률 <b>${probA}%</b> 목표 달성.`;}
+  if(probA>=90&&rateA<=4){clsA='ok';msgA=`<span class="tag tok">안전</span> ${periodA}년 계획에서 인출률 <b>${rateA.toFixed(2)}%</b>, 생존 확률 <b>${probA}%</b> 목표 달성.`+(inflows.length?` 자산 유입 ${inflows.length}건 (합계 ${fmtW(totalInflowFV)}) 반영.`:'');}
   else if(probA>=70){clsA='warn';msgA=`<span class="tag twarn">주의</span> ${periodA}년 계획 생존 확률 <b>${probA}%</b>. 추가 필요 자산 약 <b>${fmtW(Math.abs(gapA))}</b>.`;}
   else{clsA='danger';msgA=`<span class="tag tdanger">위험</span> ${periodA}년 고갈 위험(확률 <b>${probA}%</b>). 자산 계획 재검토 필요.`;}
   $('adv-a').innerHTML=msgA;$('adv-a').className='adv '+clsA;
@@ -1093,7 +1151,7 @@ function update(){
   const stagesSolo=STAGES.filter(s=>s.solo);
   const wB=buildW(stagesSolo,[{startY:0,amt:bP.total}],remB,infl,[],retAge+meDeathY);
   const rateB=assetAtMeDeath>0?(wB[0]/assetAtMeDeath)*100:0;
-  const probB=Math.round(mc(assetAtMeDeath,wB,ret,vol,remB,inherit)*100);
+  const probB=Math.round(mc(assetAtMeDeath,wB,ret,vol,remB,inherit,[])*100);
   const avgWB=wB.reduce((a,b)=>a+b,0)/wB.length;
   const pvFB=(1-Math.pow(1+netRet/100,-remB))/(netRet/100);
   const neededB=avgWB*pvFB+inherit*Math.pow(1+netRet/100,-remB);
@@ -1128,7 +1186,7 @@ function update(){
   const cP=getSoloPension('c');
   const wC=buildW(stagesSolo,[{startY:0,amt:cP.total}],remC,infl,[],retAge+spDeathY);
   const rateC=assetAtSpDeath>0?(wC[0]/assetAtSpDeath)*100:0;
-  const probC=Math.round(mc(assetAtSpDeath,wC,ret,vol,remC,inherit)*100);
+  const probC=Math.round(mc(assetAtSpDeath,wC,ret,vol,remC,inherit,[])*100);
   const avgWC=wC.reduce((a,b)=>a+b,0)/wC.length;
   const pvFC=(1-Math.pow(1+netRet/100,-remC))/(netRet/100);
   const neededC=avgWC*pvFC+inherit*Math.pow(1+netRet/100,-remC);
@@ -1178,6 +1236,7 @@ function update(){
 buildStageGrid();
 buildAssetRows();
 renderEvents();
+renderInflows();
 renderCashflows();
 renderFixedPensions();
 $('ls-grid').style.gridTemplateColumns='1fr';
