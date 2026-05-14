@@ -1,6 +1,6 @@
 # 은퇴 안전 인출 계산기
 
-**정원준 CFP · 서울영테크** 재무강의용 은퇴 인출 시뮬레이터
+**정원준 CFP · 서울리(Re)테크** 재무강의용 은퇴 인출 시뮬레이터
 
 🔗 **라이브 데모**: `https://[your-username].github.io/retirement-calculator/`
 
