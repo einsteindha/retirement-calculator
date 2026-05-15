@@ -311,26 +311,35 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 
 <!-- 6. 독거 공적연금 -->
 <div class="phase" id="solo-pension-phase" style="display:none">
-  <div class="pt">6 · 공적연금 — 독거 시나리오 별도 입력 (시나리오 B·C)</div>
+  <div class="pt">6 · 독거자 공적연금 입력</div>
   <div class="solo-pension-card">
-    <div class="sn" style="margin-bottom:11px">독거 이후 공적연금은 유족연금 수령 여부 등 개인 상황이 달라 계산기가 추정할 수 없습니다. <b>국민연금공단 홈페이지 → 내 연금 알아보기</b>에서 직접 확인 후 입력하세요.</div>
-    <div class="solo-pension-grid" id="solo-pension-grid">
-      <div class="solo-col" style="border-color:#F5C4B3">
-        <div class="solo-col-title"><span class="ls-badge bB">시나리오 B</span><span style="font-size:11px;color:var(--text2)">본인 사망 후 배우자가 받을 공적연금</span></div>
-        <div class="pension-item-row"><span class="pension-item-label">배우자 본인 연금</span><input class="pension-item-input" type="number" id="b-pension-own" min="0" max="300" step="5" value="60"><span class="pension-item-unit">만원/월</span></div>
-        <div class="pension-item-row"><span class="pension-item-label">유족연금 (본인→배우자)</span><input class="pension-item-input" type="number" id="b-pension-survivor" min="0" max="200" step="5" value="0"><span class="pension-item-unit">만원/월</span></div>
-        <div class="pension-item-row"><span class="pension-item-label">기타 (개인연금 등)</span><input class="pension-item-input" type="number" id="b-pension-etc" min="0" max="200" step="5" value="0"><span class="pension-item-unit">만원/월</span></div>
-        <div class="solo-total solo-total-b" id="b-pension-total">배우자 수령 합계: 60만원/월</div>
-        <div class="sn" style="margin-top:7px">유족연금과 배우자 본인 연금은 중복 수령 시 조정될 수 있습니다.</div>
+    <div class="sn" style="margin-bottom:11px">
+      독거 이후 공적연금은 유족연금 수령 여부 등 개인 상황이 달라 계산기가 추정할 수 없습니다.<br>
+      <b>국민연금공단 홈페이지 → 내 연금 알아보기</b>에서 직접 확인 후 입력하세요.<br>
+      기대수명 기준으로 <b id="solo-pension-who-desc">누가 독거자인지</b>가 자동 결정되며, 아래 금액이 독거 시나리오에 적용됩니다.
+    </div>
+    <div class="solo-col" style="border-color:#F5C4B3" id="solo-pension-col">
+      <div class="solo-col-title">
+        <span class="ls-badge bB" id="solo-pension-badge">독거자</span>
+        <span style="font-size:11px;color:var(--text2)" id="solo-pension-col-desc">독거자가 받을 공적연금</span>
       </div>
-      <div class="solo-col" style="border-color:#FAC775">
-        <div class="solo-col-title"><span class="ls-badge bC">시나리오 C</span><span style="font-size:11px;color:var(--text2)">배우자 사망 후 본인이 받을 공적연금</span></div>
-        <div class="pension-item-row"><span class="pension-item-label">본인 연금</span><input class="pension-item-input" type="number" id="c-pension-own" min="0" max="300" step="5" value="80"><span class="pension-item-unit">만원/월</span></div>
-        <div class="pension-item-row"><span class="pension-item-label">유족연금 (배우자→본인)</span><input class="pension-item-input" type="number" id="c-pension-survivor" min="0" max="200" step="5" value="0"><span class="pension-item-unit">만원/월</span></div>
-        <div class="pension-item-row"><span class="pension-item-label">기타 (개인연금 등)</span><input class="pension-item-input" type="number" id="c-pension-etc" min="0" max="200" step="5" value="0"><span class="pension-item-unit">만원/월</span></div>
-        <div class="solo-total solo-total-c" id="c-pension-total">본인 수령 합계: 80만원/월</div>
-        <div class="sn" style="margin-top:7px">유족연금과 본인 연금은 중복 수령 시 조정될 수 있습니다.</div>
+      <div class="pension-item-row">
+        <span class="pension-item-label" id="solo-own-label">본인 연금</span>
+        <input class="pension-item-input" type="number" id="s-pension-own" min="0" max="300" step="5" value="60">
+        <span class="pension-item-unit">만원/월</span>
       </div>
+      <div class="pension-item-row">
+        <span class="pension-item-label">유족연금</span>
+        <input class="pension-item-input" type="number" id="s-pension-survivor" min="0" max="200" step="5" value="0">
+        <span class="pension-item-unit">만원/월</span>
+      </div>
+      <div class="pension-item-row">
+        <span class="pension-item-label">기타 (개인연금 등)</span>
+        <input class="pension-item-input" type="number" id="s-pension-etc" min="0" max="200" step="5" value="0">
+        <span class="pension-item-unit">만원/월</span>
+      </div>
+      <div class="solo-total solo-total-b" id="s-pension-total">독거자 수령 합계: 60만원/월</div>
+      <div class="sn" style="margin-top:7px">유족연금과 본인 연금은 중복 수령 시 조정될 수 있습니다. 국민연금공단에 직접 확인하세요.</div>
     </div>
   </div>
 </div>
@@ -745,15 +754,16 @@ function renderPMeta(who,p,retAge,base){
 }
 const var_blue='#378ADD',var_green='#1D9E75',var_red='#D85A30';
 
-function getSoloPension(sc){
-  if(sc==='b'){const own=+$('b-pension-own').value||0,surv=+$('b-pension-survivor').value||0,etc=+$('b-pension-etc').value||0;return{total:own+surv+etc,own,surv,etc};}
-  const own=+$('c-pension-own').value||0,surv=+$('c-pension-survivor').value||0,etc=+$('c-pension-etc').value||0;return{total:own+surv+etc,own,surv,etc};
+function getSoloPension(){
+  const own=+$('s-pension-own').value||0;
+  const surv=+$('s-pension-survivor').value||0;
+  const etc=+$('s-pension-etc').value||0;
+  return{total:own+surv+etc,own,surv,etc};
 }
 function updateSoloPensionTotals(){
-  const bP=getSoloPension('b'),cP=getSoloPension('c');
-  const bTotal=$('b-pension-total');if(bTotal)bTotal.textContent=`배우자 수령 합계: ${bP.total}만원/월`;
-  const cTotal=$('c-pension-total');if(cTotal)cTotal.textContent=`본인 수령 합계: ${cP.total}만원/월`;
-  // 독거 패널 미리보기는 update()에서 soloWho 결정 후 처리
+  const sP=getSoloPension();
+  const el=$('s-pension-total');
+  if(el) el.textContent=`독거자 수령 합계: ${sP.total}만원/월`;
 }
 
 function toggleSp(){
@@ -761,12 +771,9 @@ function toggleSp(){
   $('sp-tr').classList.toggle('on',hasSp);$('sp-tog-lbl').textContent=hasSp?'ON':'OFF';
   $('sp-sec').classList.toggle('open',hasSp);$('pp-sp').style.display=hasSp?'block':'none';
   $('ls-sp').style.display=hasSp?'block':'none';
-  $('ls-grid').style.gridTemplateColumns=hasSp?'1fr 1fr':'1fr';
-  $('pw').style.gridTemplateColumns=hasSp?'1fr 1fr':'1fr';
   $('pt-plus').style.display=hasSp?'':'none';$('pt-sp-w').style.display=hasSp?'':'none';
   $('solo-pension-phase').style.display=hasSp?'block':'none';
   $('cmp3').style.display=hasSp?'grid':'none';
-  $('solo-pension-grid').style.gridTemplateColumns=hasSp?'1fr 1fr':'1fr';
   update();
 }
 function setMode(who,mode){
@@ -1148,8 +1155,20 @@ function update(){
   // ── 독거 시나리오 (기대수명 기준 자동 결정)
   const pathAbase=deterPath(investable,wA,ret,periodA,inflowArrA);
   const assetAtDeath=pathAbase[Math.min(soloDeathY,periodA)];
-  const soloPensionSc = soloWho==='sp'?'b':'c';
-  const sP=getSoloPension(soloPensionSc);
+  const sP=getSoloPension();
+  // 섹션6 레이블 — soloWho 기준 동적 업데이트
+  const soloLabel = soloWho==='sp'?'배우자':'본인';
+  const firstDiedLabel = soloWho==='sp'?'본인':'배우자';
+  const whoDesc=$('solo-pension-who-desc');
+  if(whoDesc) whoDesc.innerHTML=`<b>${firstDiedLabel}이 먼저 사망 → ${soloLabel}이 독거자</b>`;
+  const badge=$('solo-pension-badge');
+  if(badge){badge.textContent=`독거자 (${soloLabel})`;badge.className=soloWho==='sp'?'ls-badge bB':'ls-badge bC';}
+  const colDesc=$('solo-pension-col-desc');
+  if(colDesc) colDesc.textContent=`${firstDiedLabel} 사망 후 ${soloLabel}이 받을 공적연금`;
+  const ownLabel=$('solo-own-label');
+  if(ownLabel) ownLabel.textContent=`${soloLabel} 연금`;
+  const solCol=$('solo-pension-col');
+  if(solCol) solCol.style.borderColor=soloWho==='sp'?'#F5C4B3':'#FAC775';
   const stagesSolo=STAGES.filter(s=>s.solo);
   const wS=buildW(stagesSolo,[{startY:0,amt:sP.total}],soloPeriod,infl,[],retAge+soloDeathY);
   const rateS=assetAtDeath>0?(wS[0]/assetAtDeath)*100:0;
@@ -1209,7 +1228,7 @@ function update(){
 }
 
 // 이벤트 리스너
-['b-pension-own','b-pension-survivor','b-pension-etc','c-pension-own','c-pension-survivor','c-pension-etc'].forEach(id=>{const el=$(id);if(el)el.addEventListener('input',update);});
+['s-pension-own','s-pension-survivor','s-pension-etc'].forEach(id=>{const el=$(id);if(el)el.addEventListener('input',update);});
 ['age','retire','asset','save','sp-age','sp-retire','sp-save','me-life','sp-life',
  'ret-simple','vol-simple','corr','me-base','me-early','me-defer','sp-base','sp-early','sp-defer',
  'buffer','infl','inherit'
@@ -1222,8 +1241,6 @@ renderEvents();
 renderInflows();
 renderCashflows();
 renderFixedPensions();
-$('ls-grid').style.gridTemplateColumns='1fr';
-$('pw').style.gridTemplateColumns='1fr';
 update();
 </script>
 </body>
