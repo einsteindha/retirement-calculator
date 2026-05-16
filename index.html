@@ -281,7 +281,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 
 <!-- 5. 공적연금 A -->
 <div class="phase">
-  <div class="pt">5 · 공적연금 수령 전략 — 시나리오 A (부부 함께)</div>
+  <div class="pt" id="pt-sec5">5 · 공적연금 수령 전략 — 시나리오 A (부부 함께)</div>
   <div class="pw" id="pw" style="grid-template-columns:1fr">
     <div class="pp"><span class="ls-badge bme">본인</span>
       <div class="ttabs"><div class="tb early" id="me-e-btn" onclick="setMode('me','early')">조기<br><span style="font-size:10px;font-weight:400">60~64세</span></div><div class="tb normal active" id="me-n-btn" onclick="setMode('me','normal')">정상<br><span style="font-size:10px;font-weight:400">65세</span></div><div class="tb defer" id="me-d-btn" onclick="setMode('me','defer')">연기<br><span style="font-size:10px;font-weight:400">66~70세</span></div></div>
@@ -341,7 +341,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 <!-- 7. 인생 단계별 생활비 -->
 <div class="phase">
   <div class="pt">7 · 인생 단계별 생활비 설계</div>
-  <div class="sn" style="margin-bottom:9px">각 단계를 ON/OFF하고 기간과 월 생활비를 입력하세요. 부부 단계 합계는 <b>부부 은퇴 기간</b>을, 독거 단계 합계는 <b>독거 기간</b>을 초과할 수 없습니다.</div>
+  <div class="sn" style="margin-bottom:9px" id="sn-sec7">각 단계를 ON/OFF하고 기간과 월 생활비를 입력하세요. 부부 단계 합계는 <b>부부 은퇴 기간</b>을, 독거 단계 합계는 <b>독거 기간</b>을 초과할 수 없습니다.</div>
   <div style="margin-bottom:10px;padding:9px 13px;background:var(--bg2);border-radius:var(--radius-lg);font-size:12px" id="stage-summary"></div>
   <div class="stage-grid" id="stage-grid"></div>
   <div class="err" id="err-stage" style="margin-top:7px"></div>
@@ -400,7 +400,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
     <div style="font-size:13px;font-weight:600;margin-bottom:10px">단계별 현금 버퍼 계산</div>
     <div style="overflow-x:auto">
       <table class="cf-table" id="buf-table">
-        <thead><tr><th>구간</th><th>상황</th><th>공적연금 수령액</th><th>월 인출 필요액</th><th>버퍼 기간</th><th>필요 버퍼</th><th></th></tr></thead>
+        <thead><tr><th>구간</th><th>상황</th><th>월 생활비</th><th>공적연금+수입</th><th>월 Gap (인출필요)</th><th>버퍼 기간</th><th>필요 버퍼</th><th></th></tr></thead>
         <tbody id="buf-body"></tbody>
       </table>
     </div>
@@ -418,13 +418,13 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 <div class="pt" style="margin-bottom:13px;font-size:12px">결과 — 시나리오 선택 <span style="font-size:10px;color:var(--text3);font-weight:400">(입력 변경 시 실시간 업데이트)</span></div>
 
 <div class="sc-tabs">
-  <button class="sc-btn act-a" id="tab-a" onclick="switchTab('a')">부부/동반 함께<br><span style="font-size:11px;font-weight:400;color:inherit">기준 시나리오</span><span class="stag tag-a">기준</span><br><span style="font-size:11px;color:inherit" id="tab-a-p">—</span></button>
+  <button class="sc-btn act-a" id="tab-a" onclick="switchTab('a')"><span id="tab-a-title">부부/동반 함께</span><br><span style="font-size:11px;font-weight:400;color:inherit">기준 시나리오</span><span class="stag tag-a">기준</span><br><span style="font-size:11px;color:inherit" id="tab-a-p">—</span></button>
   <button class="sc-btn" id="tab-s" onclick="switchTab('s')">독거 시나리오<br><span style="font-size:11px;font-weight:400;color:inherit" id="tab-s-who">—</span><span class="stag tag-b" id="tab-s-tag">독거</span><br><span style="font-size:11px;color:inherit" id="tab-s-p">—</span></button>
 </div>
 
 <!-- 패널 A -->
 <div class="rp active" id="panel-a">
-  <div class="sh sh-a"><b style="color:#0C3D6E">시나리오 A — 부부/동반 함께 생존</b><br><span id="sh-a-desc" style="color:#185FA5;font-size:12px">—</span></div>
+  <div class="sh sh-a"><b style="color:#0C3D6E" id="sh-a-title">시나리오 A — 부부/동반 함께 생존</b><br><span id="sh-a-desc" style="color:#185FA5;font-size:12px">—</span></div>
   <div class="rb">
     <div class="met"><div class="ml">은퇴 시점 예상 자산</div><div class="mv" id="a-asset">—</div><div class="ms" id="a-asset-s">—</div></div>
     <div class="met"><div class="ml">1년차 인출률</div><div class="mv" id="a-rate">—</div><div class="ms" id="a-rate-s">—</div></div>
@@ -511,7 +511,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 </div>
 
 <div class="cmp3" id="cmp3" style="grid-template-columns:1fr 1px 1fr">
-  <div class="cmp3-col"><div class="cmp3-ttl">부부/동반 함께</div><div class="cmp3-row"><span class="cmp3-lbl">생존 확률</span><span class="cmp3-val" id="cmp-a-p">—</span></div><div class="cmp3-row"><span class="cmp3-lbl">인출률</span><span class="cmp3-val" id="cmp-a-r">—</span></div><div class="cmp3-period" id="cmp-a-period">—</div></div>
+  <div class="cmp3-col"><div class="cmp3-ttl" id="cmp-a-ttl">부부/동반 함께</div><div class="cmp3-row"><span class="cmp3-lbl">생존 확률</span><span class="cmp3-val" id="cmp-a-p">—</span></div><div class="cmp3-row"><span class="cmp3-lbl">인출률</span><span class="cmp3-val" id="cmp-a-r">—</span></div><div class="cmp3-period" id="cmp-a-period">—</div></div>
   <div class="cmp3-sep"></div>
   <div class="cmp3-col"><div class="cmp3-ttl" id="cmp-s-ttl">독거 시나리오</div><div class="cmp3-row"><span class="cmp3-lbl">생존 확률</span><span class="cmp3-val" id="cmp-s-p">—</span></div><div class="cmp3-row"><span class="cmp3-lbl">인출률</span><span class="cmp3-val" id="cmp-s-r">—</span></div><div class="cmp3-period" id="cmp-s-period">—</div></div>
   <div class="cmp3-msg" id="cmp3-msg"></div>
@@ -553,7 +553,7 @@ function buildStageGrid(){
   const coupleHeader=document.createElement('div');
   coupleHeader.id='stage-header-couple';
   coupleHeader.innerHTML=`<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:#EBF3FF;border:1px solid #B5D4F4;border-radius:var(--radius-lg);margin-bottom:7px">
-    <span style="font-size:12px;font-weight:700;color:#185FA5">👫 동반 인출기</span>
+    <span style="font-size:12px;font-weight:700;color:#185FA5" id="stage-couple-label">👫 동반 인출기</span>
     <span style="font-size:11px;color:#185FA5" id="stage-couple-period">—</span>
     <span style="margin-left:auto;font-size:11px;color:#378ADD;font-weight:600" id="stage-couple-rem"></span>
   </div>`;
@@ -589,13 +589,16 @@ function buildStageGrid(){
   // 독거 섹션 헤더 (배우자 있을 때만 표시)
   const soloHeader=document.createElement('div');
   soloHeader.id='stage-header-solo';
-  soloHeader.style.display='none';
   soloHeader.innerHTML=`<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:#FAECE7;border:1px solid #F5C4B3;border-radius:var(--radius-lg);margin-top:12px;margin-bottom:7px">
     <span style="font-size:12px;font-weight:700;color:#993C1D">🧍 독거 인출기</span>
     <span style="font-size:11px;color:#993C1D" id="stage-solo-period">—</span>
     <span style="margin-left:auto;font-size:11px;color:#D85A30;font-weight:600" id="stage-solo-rem"></span>
   </div>`;
-  grid.appendChild(soloHeader);
+  // 독거 단계 전체를 wrapper로 감싸서 hasSp에 따라 통째로 숨김
+  const soloWrapper = document.createElement('div');
+  soloWrapper.id = 'stage-solo-wrapper';
+  soloWrapper.style.display = 'none'; // 초기 숨김 — toggleSp/update에서 제어
+  soloWrapper.appendChild(soloHeader);
 
   STAGES.filter(s=>s.solo).forEach(s=>{
     const st=stageState[s.id];
@@ -621,8 +624,10 @@ function buildStageGrid(){
           </div>
         </div>
       </div>`;
-    grid.appendChild(row);
+    soloWrapper.appendChild(row);
   });
+
+  grid.appendChild(soloWrapper);
 }
 
 function toggleStage(id){
@@ -658,7 +663,8 @@ function clampStageYears(retireAge,meLife,spLife){
   const errEl=$('err-stage');
   if(errEl){
     const msgs=[];
-    if(coupleTotal>periodA) msgs.push(`부부 단계 합계 ${coupleTotal}년이 은퇴 기간 ${periodA}년을 초과합니다. 초과분은 계산 시 무시됩니다.`);
+    const errCoupleLabel = hasSp ? '부부 단계 합계' : '인출 단계 합계';
+    if(coupleTotal>periodA) msgs.push(`${errCoupleLabel} ${coupleTotal}년이 은퇴 기간 ${periodA}년을 초과합니다. 초과분은 계산 시 무시됩니다.`);
     if(hasSp&&soloTotal>soloPeriod&&soloPeriod>0) msgs.push(`독거 단계 합계 ${soloTotal}년이 독거 기간 ${soloPeriod}년을 초과합니다. 초과분은 계산 시 무시됩니다.`);
     errEl.textContent=msgs.join(' ');
   }
@@ -1222,7 +1228,9 @@ function update(){
     summaryHTML+=` | 독거: `+soloActive.map(s=>`<span class="stage-badge" style="background:${s.bg};color:${s.tc}">${s.label}</span> <b>${stageState[s.id].yrs}년</b>`).join(' → ');
     if(sLeft>0) summaryHTML+=` <span style="font-size:11px;color:var(--text3);font-weight:400">(잔여 ${sLeft}년)</span>`;
   }
-  summaryHTML+=`<br><span style="font-size:11px;color:var(--text3)">부부 단계 합계 ${coupleTotal}년 / 은퇴 기간 ${periodA}년 · 독거 단계 합계 ${soloTotal}년 / 독거 기간 ${soloPeriod}년</span>`;
+  const coupleLabel = hasSp ? "부부 단계 합계" : "인출 단계 합계";
+  const soloSummaryText = hasSp ? ` · 독거 단계 합계 ${soloTotal}년 / 독거 기간 ${soloPeriod}년` : '';
+  summaryHTML+=`<br><span style="font-size:11px;color:var(--text3)">${coupleLabel} ${coupleTotal}년 / 은퇴 기간 ${periodA}년${soloSummaryText}</span>`;
   $('stage-summary').innerHTML=summaryHTML;
 
   // 슬라이더 max 동적 제한 + 합계 기준 잔여기간 표시
@@ -1237,8 +1245,10 @@ function update(){
     }
 
     // 독거 섹션 헤더 표시/숨김 + 기간 업데이트
-    const soloHeaderEl=$('stage-header-solo');
-    if(soloHeaderEl) soloHeaderEl.style.display=hasSp?'block':'none';
+    // 독거 단계 wrapper 전체 표시/숨김 (soloHeader 포함)
+    const soloWrapperEl=$('stage-solo-wrapper');
+    if(soloWrapperEl) soloWrapperEl.style.display=hasSp?'block':'none';
+    // stage-header-solo는 wrapper 안에 있으므로 별도 제어 불필요
     const sPeriodEl=$('stage-solo-period');
     const sRemHeaderEl=$('stage-solo-rem');
     if(sPeriodEl) sPeriodEl.textContent=hasSp?`(독거 기간 ${soloPeriod}년)`:'';
@@ -1297,6 +1307,34 @@ function update(){
 
   const soloWhoLabel = soloWho==='sp' ? '배우자 독거' : '본인 독거';
   $('ls-summary').innerHTML=hasSp?`부부 함께: ${periodA}년 · 독거 시나리오: ${soloWhoLabel} ${soloPeriod}년`:`본인 은퇴 기간 <b>${mePeriod}년</b>`;
+
+  // ── 배우자 유무에 따른 표현 동적 업데이트
+  const lbl = hasSp ? {
+    tabA:     '부부/동반 함께',
+    shA:      '시나리오 A — 부부/동반 함께 생존',
+    cmpA:     '부부/동반 함께',
+    sec5:     '5 · 공적연금 수령 전략 — 시나리오 A (부부 함께)',
+    sec7:     '각 단계를 ON/OFF하고 기간과 월 생활비를 입력하세요. 부부 단계 합계는 <b>부부 은퇴 기간</b>을, 독거 단계 합계는 <b>독거 기간</b>을 초과할 수 없습니다.',
+    coupleHd: '👫 동반 인출기',
+    summaryCouple: `부부 단계 합계`,
+    errorCouple:   `부부 단계`,
+  } : {
+    tabA:     '본인',
+    shA:      '시나리오 A — 본인 기준',
+    cmpA:     '본인',
+    sec5:     '5 · 공적연금 수령 전략',
+    sec7:     '각 단계를 ON/OFF하고 기간과 월 생활비를 입력하세요. 단계 합계는 <b>은퇴 기간</b>을 초과할 수 없습니다.',
+    coupleHd: '📋 인출기',
+    summaryCouple: `인출 단계 합계`,
+    errorCouple:   `인출 단계`,
+  };
+  const _el = id => document.getElementById(id);
+  if(_el('tab-a-title'))   _el('tab-a-title').textContent   = lbl.tabA;
+  if(_el('sh-a-title'))    _el('sh-a-title').textContent    = lbl.shA;
+  if(_el('cmp-a-ttl'))     _el('cmp-a-ttl').textContent     = lbl.cmpA;
+  if(_el('pt-sec5'))       _el('pt-sec5').textContent       = lbl.sec5;
+  if(_el('sn-sec7'))       _el('sn-sec7').innerHTML         = lbl.sec7;
+  if(_el('stage-couple-label')) _el('stage-couple-label').textContent = lbl.coupleHd;
   $('tab-a-p').textContent=periodA+'년 계획';
   const tabS=$('tab-s');
   if(tabS){
@@ -1332,20 +1370,46 @@ function update(){
   const pensionsA=hasSp?[{startY:mePstartY,amt:meP.amt},{startY:spPstartY,amt:spP.amt}]:[{startY:mePstartY,amt:meP.amt}];
   const stagesA=STAGES.filter(s=>!s.solo);
 
-  function calcBufBySegments(retireAge, meRetireAge, spRetireAge, meP, spP, bufYrs, living, infl){
+  // 구간 중간 시점의 인생 단계 생활비 반환 (단계별 동적 생활비)
+  function getLivingAtYear(yearFromRetire){
+    const coupleOn = STAGES.filter(s=>!s.solo&&stageState[s.id].on);
+    let cursor = 0;
+    for(const s of coupleOn){
+      const yrs = stageState[s.id].yrs;
+      if(yearFromRetire < cursor + yrs) return stageState[s.id].mon;
+      cursor += yrs;
+    }
+    // 마지막 단계 이후엔 마지막 생활비 적용
+    return coupleOn.length ? stageState[coupleOn[coupleOn.length-1].id].mon : 250;
+  }
+
+  function calcBufBySegments(retireAge, meRetireAge, spRetireAge, meP, spP, bufYrs){
     const bufMonths = bufYrs * 12;
 
+    // 나이 차이를 연도(은퇴 기준)로 환산
     const T = {
       meRet : 0,
       spRet : hasSp ? spRetireAge - retireAge : null,
-      mePen : meP.sa - retireAge,
-      spPen : hasSp ? spP.sa - retireAge : null,
+      mePen : meP.sa - retireAge,   // 본인 연금 개시 (은퇴 후 N년)
+      spPen : hasSp ? spP.sa - retireAge : null, // 배우자 연금 개시 (은퇴 후 N년, 나이차 반영 안 됨 — 아래에서 보정)
     };
+
+    // 배우자 연금 개시 시점을 본인 은퇴 기준 연도로 정확히 환산
+    // 배우자가 spP.sa 세에 연금 수령 → 본인 나이 기준으로 환산
+    const spAgeCurrent = +$('sp-age').value;
+    const ageCurrent   = +$('age').value;
+    // 본인 은퇴 시점의 배우자 나이 = spAgeCurrent + (retireAge - ageCurrent)
+    // 배우자 연금 개시까지 남은 나이 차 = spP.sa - 본인은퇴시점배우자나이
+    if(hasSp){
+      const spAgeAtMyRetire = spAgeCurrent + (retireAge - ageCurrent);
+      T.spPen = spP.sa - spAgeAtMyRetire; // 본인 은퇴 후 N년 뒤 배우자 연금 개시
+    }
 
     const milestones = new Set([0]);
     if(T.spRet !== null && T.spRet > 0) milestones.add(T.spRet);
     if(T.mePen > 0) milestones.add(T.mePen);
     if(T.spPen !== null && T.spPen > 0) milestones.add(T.spPen);
+    // 마지막 연금 개시 이후 구간도 포함
     const lastPen = Math.max(T.mePen, T.spPen !== null ? T.spPen : 0);
     milestones.add(lastPen + 1);
 
@@ -1362,37 +1426,45 @@ function update(){
       const midY = (seg.from + seg.to) / 2;
       const ageAtMid = retireAge + midY;
 
+      // ── 구간별 실제 생활비 (인생 단계 기준 동적 적용)
+      const living = getLivingAtYear(Math.floor(midY));
+
+      // 공적연금 수령 여부
       let pension = 0;
       if(midY >= T.mePen) pension += meP.amt;
       if(hasSp && T.spPen !== null && midY >= T.spPen) pension += spP.amt;
 
-      let desc = '';
+      // 구간 설명
       const meHasPen = midY >= T.mePen;
       const spHasPen = hasSp && T.spPen !== null && midY >= T.spPen;
-
+      let desc = '';
       if(!meHasPen && (!hasSp || !spHasPen)){
         desc = hasSp ? '부부 모두 공적연금 미수령' : '본인 공적연금 미수령';
       } else if(meHasPen && hasSp && !spHasPen){
-        desc = '본인 연금 수령 중, 배우자 미수령';
+        desc = '본인 연금 수령, 배우자 미수령';
       } else if(!meHasPen && hasSp && spHasPen){
-        desc = '배우자 연금 수령 중, 본인 미수령';
+        desc = '배우자 연금 수령, 본인 미수령';
       } else {
-        desc = hasSp ? '부부 모두 공적연금 수령 중' : '본인 공적연금 수령 중';
+        desc = hasSp ? '부부 모두 공적연금 수령' : '본인 공적연금 수령';
       }
 
+      // 추가 수입 (현금흐름·정액연금)
       let extraIncome = 0;
       cashflows.forEach(cf => { const end=cf.endAge>0?cf.endAge:200; if(ageAtMid>=cf.startAge&&ageAtMid<end) extraIncome+=cf.amt; });
       fixedPensions.forEach(fp => { const end=fp.endAge>0?fp.endAge:200; if(ageAtMid>=fp.startAge&&ageAtMid<end) extraIncome+=fp.amt; });
 
       const totalIncome = pension + extraIncome;
+      // 구간 실제 Gap = 생활비 - 모든 수입
       const netMon = Math.max(0, living - totalIncome);
       const segBuf = netMon * bufMonths;
+      // 구간별 독립 버퍼 — 최대값이 아니라 각각 저장 (동적 조정용)
       if(segBuf > maxBuf) maxBuf = segBuf;
 
       rows.push({
         from: seg.from, to: seg.to,
         fromAge: retireAge + seg.from, toAge: retireAge + seg.to,
         yrs: seg.to - seg.from,
+        living,
         desc, pension, extraIncome, totalIncome, netMon, segBuf
       });
     });
@@ -1400,10 +1472,7 @@ function update(){
     return { maxBuf, rows };
   }
 
-  const coupleStagesActive = STAGES.filter(s=>!s.solo&&stageState[s.id].on);
-  const bufLiving = coupleStagesActive.length ? stageState[coupleStagesActive[0].id].mon : 250;
-
-  const { maxBuf, rows: bufRows } = calcBufBySegments(retAge, retAge, hasSp?+$('sp-retire').value:retAge, meP, spP, buf, bufLiving, infl);
+  const { maxBuf, rows: bufRows } = calcBufBySegments(retAge, retAge, hasSp?+$('sp-retire').value:retAge, meP, spP, buf);
   const bufAmt = maxBuf;
 
   const bufBody = $('buf-body');
@@ -1415,11 +1484,12 @@ function update(){
     tr.innerHTML = `
       <td style="font-size:11px;font-weight:500">${r.fromAge}세 → ${r.toAge}세</td>
       <td style="font-size:11px;color:var(--text2)">${r.desc}</td>
-      <td>${r.pension > 0 ? r.pension+'만원' : '—'}</td>
-      <td style="font-weight:600">${r.netMon}만원</td>
+      <td>${r.living}만원</td>
+      <td>${r.totalIncome > 0 ? r.totalIncome+'만원' : '—'}</td>
+      <td style="font-weight:600;color:${r.netMon===0?'var(--green)':'var(--text)'}">${r.netMon===0?'0 (자급)':r.netMon+'만원'}</td>
       <td>${buf}년 (${buf*12}개월)</td>
-      <td style="font-weight:700;color:${isMax?'var(--blue)':'var(--text)'}">${fmtW(r.segBuf)}${isMax?' ← 최대':''}</td>
-      <td style="font-size:10px;color:var(--text3)">${isMax?'▶ 기준':''}</td>`;
+      <td style="font-weight:700;color:${isMax?'var(--blue)':'var(--text)'}">${r.segBuf===0?'불필요':fmtW(r.segBuf)}${isMax?' ← 기준':''}</td>
+      <td style="font-size:10px;color:var(--text3)">${isMax?'▶':''}</td>`;
     bufBody.appendChild(tr);
   });
   $('buf-max').textContent = fmtW(bufAmt);
@@ -1437,7 +1507,7 @@ function update(){
   const neededA=avgWA*pvFA+inherit*Math.pow(1+netRet/100,-periodA)+bufAmt;
   const gapA=assetAtRet-neededA;
 
-  $('sh-a-desc').textContent=`부부/동반 기준, ${periodA}년 계획. 이벤트 ${events.length}건 · 자산유입 ${inflows.length}건 · 현금흐름 ${cashflows.length}건 · 정액연금 ${fixedPensions.length}건 포함.`;
+  $('sh-a-desc').textContent=`${hasSp?'부부/동반':'본인'} 기준, ${periodA}년 계획. 이벤트 ${events.length}건 · 자산유입 ${inflows.length}건 · 현금흐름 ${cashflows.length}건 · 정액연금 ${fixedPensions.length}건 포함.`;
   $('a-asset').textContent=fmtW(assetAtRet);$('a-asset-s').textContent=ytr+'년 후 예상';
   $('a-rate').textContent=rateA.toFixed(2)+'%';$('a-rate').className='mv '+rateClass(rateA);$('a-rate-s').textContent=rateA<3.5?'안전':rateA<5?'주의':'위험';
   $('a-prob').textContent=probA+'%';$('a-prob').className='mv '+probClass(probA);$('a-prob-s').textContent=probA>=90?'목표 달성':probA>=70?'보완 필요':'재설계 필요';
@@ -1593,7 +1663,7 @@ function update(){
   $('cmp-s-p').textContent=probS+'%';$('cmp-s-p').style.color=probColor(probS);$('cmp-s-r').textContent=rateS.toFixed(2)+'%';$('cmp-s-period').textContent=`${soloName} 잔여 ${soloPeriod}년`;
   if(probS<70){$('cmp3-msg').textContent=`독거 시나리오에서 ${soloName} 고갈 위험 ${probS}% (A 대비 ${diffS}%p). 배우자 보호 설계 필수.`;$('cmp3-msg').style.color=probColor(probS);}
   else if(probS<90){$('cmp3-msg').textContent=`독거 시나리오에서 ${soloName} 확률 ${probS}%로 낮아집니다. 유족연금·종신보험으로 보완하세요.`;$('cmp3-msg').style.color=probColor(probS);}
-  else{$('cmp3-msg').textContent=`부부 함께·독거 모두 90% 이상 — 두 분 모두 잘 보호되고 있습니다.`;$('cmp3-msg').style.color='#1D9E75';}
+  else{$('cmp3-msg').textContent=`부부/동반 함께·독거 모두 90% 이상 — 두 분 모두 잘 보호되고 있습니다.`;$('cmp3-msg').style.color='#1D9E75';}
 }
 
 // 이벤트 리스너
