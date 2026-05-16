@@ -260,12 +260,12 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
       <div class="sn" style="margin-bottom:9px">Portfolio Visualizer 등 백테스트 도구로 본인 포트폴리오의 과거 수익률·변동성을 확인한 후 입력하세요. CFP 상담 결과값을 입력해도 됩니다.</div>
       <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">은퇴 전 (적립기) — 자산 성장 추산에 사용</div>
       <div class="g2" style="margin-bottom:12px">
-        <div class="ic"><div class="il">기대수익률 <span class="iv" id="l-ret-s">7.0%</span></div><input type="range" id="ret-simple" min="1" max="15" step="0.5" value="7"></div>
-        <div class="ic"><div class="il">변동성(표준편차) <span class="iv" id="l-vol-s">14.0%</span></div><input type="range" id="vol-simple" min="1" max="30" step="0.5" value="14"></div>
+        <div class="ic"><div class="il">기대수익률 <span class="iv" id="l-ret-s">6.0%</span></div><input type="range" id="ret-simple" min="1" max="15" step="0.5" value="6"></div>
+        <div class="ic"><div class="il">변동성(표준편차) <span class="iv" id="l-vol-s">12.0%</span></div><input type="range" id="vol-simple" min="1" max="30" step="0.5" value="12"></div>
       </div>
       <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">은퇴 후 (인출기) — 몬테카를로 시뮬레이션에 사용</div>
       <div class="g2">
-        <div class="ic"><div class="il">기대수익률 <span class="iv" id="l-ret-r">5.0%</span></div><input type="range" id="ret-retire" min="0.5" max="12" step="0.5" value="5"></div>
+        <div class="ic"><div class="il">기대수익률 <span class="iv" id="l-ret-r">4.0%</span></div><input type="range" id="ret-retire" min="0.5" max="12" step="0.5" value="4"></div>
         <div class="ic"><div class="il">변동성(표준편차) <span class="iv" id="l-vol-r">10.0%</span></div><input type="range" id="vol-retire" min="1" max="25" step="0.5" value="10"></div>
       </div>
       <div class="sn" style="margin-top:8px">은퇴 후에는 인출기 특성상 적립기보다 보수적인 수익률·변동성을 설정하는 것이 일반적입니다.</div>
@@ -441,9 +441,9 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:7px">
       <span style="font-size:13px;font-weight:600">연도별 자산 — 시나리오 A</span>
       <div class="leg">
-        <div class="li"><div class="ld" style="background:#1D9E75"></div>낙관</div>
-        <div class="li"><div class="ld" style="background:#378ADD"></div>기본</div>
-        <div class="li"><div class="ld" style="background:#D85A30"></div>비관</div>
+        <div class="li"><div class="ld" style="background:rgba(55,138,221,0.35)"></div>상위 10%</div>
+        <div class="li"><div class="ld" style="background:#378ADD"></div>중앙값</div>
+        <div class="li"><div class="ld" style="background:rgba(55,138,221,0.35)"></div>하위 10%</div>
         <div class="li seq-leg" id="seq-leg" style="display:none"><div class="ld" style="background:#A855F7"></div>수익률 시나리오</div>
       </div>
     </div>
@@ -500,7 +500,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
     <div style="overflow-x:auto"><table class="cf-table"><thead><tr><th>단계</th><th>기간</th><th id="cf-s-age-th">나이</th><th>월 생활비</th><th id="cf-s-pen-th">공적연금</th><th>월 인출 필요</th></tr></thead><tbody id="cf-body-s"></tbody></table></div>
   </div>
   <div class="cc">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:7px"><span style="font-size:13px;font-weight:600" id="chart-s-title">독거자 자산</span><div class="leg"><div class="li"><div class="ld" style="background:#1D9E75"></div>낙관</div><div class="li"><div class="ld" style="background:#BA7517"></div>기본</div><div class="li"><div class="ld" style="background:#D85A30"></div>비관</div></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:7px"><span style="font-size:13px;font-weight:600" id="chart-s-title">독거자 자산</span><div class="leg"><div class="li"><div class="ld" style="background:rgba(186,117,23,0.35)"></div>상위 10%</div><div class="li"><div class="ld" style="background:#BA7517"></div>중앙값</div><div class="li"><div class="ld" style="background:rgba(186,117,23,0.35)"></div>하위 10%</div></div></div>
     <div style="position:relative;width:100%;height:240px"><canvas id="chart-s" role="img" aria-label="독거 시나리오 자산 잔액"></canvas></div>
     <div style="font-size:11px;color:var(--text3);margin-top:6px" id="note-s"></div>
   </div>
@@ -893,18 +893,24 @@ function clearSeq(){
 
 function updateSeqChart(){
   if(!_seqChartData||!cA) return;
-  const{investable,wA,ret,periodA,inflowArrA}=_seqChartData;
+  const{investable,wA,ret,vol,periodA,inflowArrA}=_seqChartData;
+  // 팬 차트 데이터셋 재생성
+  const fan=mcPaths(investable,wA,ret,vol,periodA,inflowArrA);
+  const hex='378ADD';
+  const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+  const fillAlpha=`rgba(${r},${g},${b},0.12)`;
+  const lineAlpha=`rgba(${r},${g},${b},0.35)`;
   const datasets=[
-    {label:'낙관',data:deterPath(investable,wA,ret+2,periodA,inflowArrA),borderColor:'#1D9E75',borderWidth:2,pointRadius:0,fill:false,tension:.3},
-    {label:'기본',data:deterPath(investable,wA,ret,periodA,inflowArrA),borderColor:'#378ADD',borderWidth:2.5,pointRadius:0,fill:false,tension:.3},
-    {label:'비관',data:deterPath(investable,wA,ret-2,periodA,inflowArrA),borderColor:'#D85A30',borderWidth:2,pointRadius:0,fill:false,tension:.3},
+    {label:'상위 10%',data:fan.p90,borderColor:lineAlpha,borderWidth:1,borderDash:[3,3],pointRadius:0,fill:'+1',backgroundColor:fillAlpha,tension:.3},
+    {label:'중앙값',data:fan.p50,borderColor:'#378ADD',borderWidth:2.5,pointRadius:0,fill:'+1',backgroundColor:fillAlpha,tension:.3},
+    {label:'하위 10%',data:fan.p10,borderColor:lineAlpha,borderWidth:1,borderDash:[3,3],pointRadius:0,fill:false,tension:.3},
   ];
   if(seqActive){
     const sign=seqRetV>=0?'+':'';
     datasets.push({
       label:`${seqStartV}년차~${seqStartV+seqDurV}년차 ${sign}${seqRetV}%`,
       data:deterPathSeq(investable,wA,ret,periodA,inflowArrA,seqStartV,seqDurV,seqRetV),
-      borderColor:'#A855F7',borderWidth:2.5,
+      borderColor:'#A855F7',borderWidth:2,
       borderDash:[6,3],pointRadius:0,fill:false,tension:.3
     });
   }
@@ -933,6 +939,38 @@ function mc(start,w,ret,vol,yrs,inherit,inflowArr=[],runs=1200){
     if(alive&&b>=inherit)ok++;
   }
   return ok/runs;
+}
+
+// 1,200개 경로를 저장 → percentile 추출 (팬 차트용)
+// 반환: {p10, p50, p90} 각각 연도별 배열 (yrs+1 길이)
+function mcPaths(start, w, ret, vol, yrs, inflowArr=[], runs=1200){
+  const mu=(ret/100)-0.5*Math.pow(vol/100,2);
+  const sigma=vol/100;
+  // 연도별 자산값 저장 [run][year]
+  const paths=[];
+  for(let i=0;i<runs;i++){
+    let b=start;
+    const path=[b];
+    for(let y=1;y<=yrs;y++){
+      const z=randNorm();
+      const r=(Math.exp(mu+sigma*z)-1)*100;
+      b=b*(1+r/100)-w[y-1];
+      if(inflowArr[y-1]) b+=inflowArr[y-1];
+      b=Math.max(0,b);
+      path.push(b);
+    }
+    paths.push(path);
+  }
+  // 연도별 percentile 추출
+  const p10=[], p50=[], p90=[];
+  for(let y=0;y<=yrs;y++){
+    const vals=paths.map(p=>p[y]).sort((a,b)=>a-b);
+    const n=vals.length;
+    p10.push(vals[Math.floor(n*0.10)]);
+    p50.push(vals[Math.floor(n*0.50)]);
+    p90.push(vals[Math.floor(n*0.90)]);
+  }
+  return {p10,p50,p90,paths};
 }
 
 // 동반기간 + 독거기간을 하나의 시뮬레이션으로 이어서 계산
@@ -973,7 +1011,7 @@ function mcChained(start, wA, deathY, wSolo, soloPeriod, ret, vol, inherit, infl
   return ok/runs;
 }
 function drawC(id,ds,labels,prev){
-  if(typeof Chart==='undefined') return null; // Chart.js 로드 실패 시 무시
+  if(typeof Chart==='undefined') return null;
   if(prev) try{prev.destroy();}catch(e){}
   const el=$(id);
   if(!el) return null;
@@ -983,7 +1021,53 @@ function drawC(id,ds,labels,prev){
     interaction:{mode:'index',intersect:false}}});
 }
 
-function fmt(v){const a=Math.abs(v);return a>=10000?(v/10000).toFixed(1)+'억':Math.round(v)+'만';}
+// 팬 차트: p10/p50/p90 + 음영 구간
+function drawFanChart(id, p10, p50, p90, labels, prev, color='#378ADD'){
+  if(typeof Chart==='undefined') return null;
+  if(prev) try{prev.destroy();}catch(e){}
+  const el=$(id);
+  if(!el) return null;
+  // 색상 파생
+  const hex=color.replace('#','');
+  const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+  const fillAlpha='rgba('+r+','+g+','+b+',0.12)';
+  const lineAlpha='rgba('+r+','+g+','+b+',0.35)';
+
+  const datasets=[
+    // p90 (상단 경계 — 음영 기준)
+    {label:'상위 10%',data:p90,borderColor:lineAlpha,borderWidth:1,borderDash:[3,3],
+     pointRadius:0,fill:'+1',backgroundColor:fillAlpha,tension:.3},
+    // p50 (중앙값 — 굵은 선)
+    {label:'중앙값',data:p50,borderColor:color,borderWidth:2.5,
+     pointRadius:0,fill:'+1',backgroundColor:fillAlpha,tension:.3},
+    // p10 (하단 경계)
+    {label:'하위 10%',data:p10,borderColor:lineAlpha,borderWidth:1,borderDash:[3,3],
+     pointRadius:0,fill:false,tension:.3},
+  ];
+  return new Chart(el,{type:'line',data:{labels,datasets},options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{mode:'index',intersect:false,callbacks:{
+        label:ctx=>{
+          const lbl=['상위 10%','중앙값','하위 10%'][ctx.datasetIndex];
+          return ` ${lbl}: ${fmtW(Math.max(0,ctx.raw))}`;
+        }
+      }}
+    },
+    scales:{
+      x:{ticks:{maxTicksLimit:11,font:{size:10},color:'#888'},grid:{display:false}},
+      y:{ticks:{font:{size:10},color:'#888',callback:v=>fmt(v)},grid:{color:'rgba(128,128,128,0.08)'},min:0}
+    },
+    interaction:{mode:'index',intersect:false}
+  }});
+}
+
+function fmt(v){
+  if(!isFinite(v)||isNaN(v)) return '—';
+  const a=Math.abs(v);
+  return a>=10000?(v/10000).toFixed(1)+'억':Math.round(v)+'만';
+}
 function fmtW(v){return fmt(v)+'원';}
 function probColor(p){return p>=90?'#1D9E75':p>=70?'#BA7517':'#D85A30';}
 function probClass(p){return p>=90?'ok':p>=70?'warn':'danger';}
@@ -1029,36 +1113,27 @@ function update(){
   const buf=+$('buffer').value,infl=+$('infl').value,inherit=+$('inherit').value*10000;
 
   const mePeriod=Math.max(1,meLife-retAge);
-  // 배우자 기대수명을 본인 은퇴 기준으로 환산 (나이 차이 반영)
-  const spLifeFromMeRet=hasSp?Math.max(0,spLife-spAge-(retAge-age)):0;
-  const periodA=hasSp?Math.max(mePeriod,spLifeFromMeRet):mePeriod;
-
-  // 독거 시나리오: 기대수명 기준 자동 결정
-  // 배우자 있으면: 두 사람 중 누가 먼저 사망? → 기대수명 짧은 쪽이 먼저
-  // 배우자 없으면: 본인 단독 시나리오
+  // soloDeathY와 soloPeriod를 먼저 계산 후 periodA 결정 (연속성 보장)
+  const _meDies = meLife - age;
+  const _spDies = hasSp ? spLife - spAge : 0;
+  const _ytrMe  = retAge - age;
   let soloWho, soloDeathY, soloPeriod, soloRetAge;
   if(hasSp){
-    const meDiesAtYear = meLife - age;   // 현재부터 본인 사망까지 년수
-    const spDiesAtYear = spLife - spAge; // 현재부터 배우자 사망까지 년수
-    const ytrMe = retAge - age;          // 본인 은퇴까지 남은 년수
-
-    if(meDiesAtYear <= spDiesAtYear){
-      // 본인이 먼저 사망 → 배우자 독거
+    if(_meDies <= _spDies){
       soloWho='sp';
-      soloDeathY = meDiesAtYear - ytrMe;  // 본인 은퇴 기준 본인 사망 연도
-      soloPeriod = Math.max(0, spDiesAtYear - meDiesAtYear);
-      soloRetAge = retAge;
+      soloDeathY = Math.max(0, _meDies - _ytrMe);
+      soloPeriod = Math.max(0, _spDies - _meDies);
     } else {
-      // 배우자가 먼저 사망 → 본인 독거
       soloWho='me';
-      soloDeathY = spDiesAtYear - ytrMe;  // 본인 은퇴 기준 배우자 사망 연도
-      soloPeriod = Math.max(0, meDiesAtYear - spDiesAtYear);
-      soloRetAge = retAge;
+      soloDeathY = Math.max(0, _spDies - _ytrMe);
+      soloPeriod = Math.max(0, _meDies - _spDies);
     }
-    soloDeathY = Math.max(0, soloDeathY);
+    soloRetAge = retAge;
   } else {
     soloWho='me'; soloDeathY=0; soloPeriod=mePeriod; soloRetAge=retAge;
   }
+  // periodA = soloDeathY + soloPeriod (완전한 기간, 나이차 반영)
+  const periodA = hasSp ? Math.max(1, soloDeathY + soloPeriod) : mePeriod;
 
   // 단계 기간 클램프 (periodA·soloPeriod는 위에서 이미 계산됨)
   clampStageYears(retAge,meLife,spLife);
@@ -1271,7 +1346,7 @@ function update(){
   // ── A
   const wA=buildW(stagesA,pensionsA,periodA,infl,events,retAge);
   const inflowArrA=buildInflowArr(periodA,retAge);
-  const rateA=investable>0?(wA[0]/investable)*100:0;
+  const rateA=investable>0&&isFinite(wA[0]/investable)?(wA[0]/investable)*100:0;
   const probA=Math.round(mc(investable,wA,ret,vol,periodA,inherit,inflowArrA)*100);
   const avgWA=wA.reduce((a,b)=>a+b,0)/wA.length;
   const pvFA=(1-Math.pow(1+netRet/100,-periodA))/(netRet/100);
@@ -1290,48 +1365,53 @@ function update(){
   const chartPeriodA = (hasSp && soloPeriod>0) ? Math.min(soloDeathY, periodA) : periodA;
   const labA=Array.from({length:chartPeriodA+1},(_,i)=>i===0?'은퇴':i+'년');
   // 시퀀스 리스크 데이터 저장
-  _seqChartData={investable,wA,ret,periodA,inflowArrA};
-  // 전체 경로 배열 (periodA 기준) — 독거 시작점 추출 및 차트 슬라이스에 사용
-  const pathOptimA=deterPath(investable,wA,ret+2,periodA,inflowArrA);
-  const pathBaseA =deterPath(investable,wA,ret,  periodA,inflowArrA);
-  const pathPessA =deterPath(investable,wA,ret-2,periodA,inflowArrA);
+  _seqChartData={investable,wA,ret,vol,periodA,inflowArrA};
+  // 몬테카를로 팬 차트: 1,200개 경로 → 10th/50th/90th percentile
+  const fanA = mcPaths(investable,wA,ret,vol,periodA,inflowArrA);
+  // 전체 경로 배열 (독거 시작점 연결용 — p10/p50/p90 각 soloDeathY 값)
+  const pathOptimA = fanA.p90;
+  const pathBaseA  = fanA.p50;
+  const pathPessA  = fanA.p10;
   // 동반 차트는 chartPeriodA까지만 슬라이스
-  const datasetsA=[
-    {label:'낙관',data:pathOptimA.slice(0,chartPeriodA+1),borderColor:'#1D9E75',borderWidth:2,pointRadius:0,fill:false,tension:.3},
-    {label:'기본',data:pathBaseA.slice(0,chartPeriodA+1), borderColor:'#378ADD',borderWidth:2.5,pointRadius:0,fill:false,tension:.3},
-    {label:'비관',data:pathPessA.slice(0,chartPeriodA+1), borderColor:'#D85A30',borderWidth:2,pointRadius:0,fill:false,tension:.3},
-  ];
-  if(seqActive){
+  const p90A = fanA.p90.slice(0, chartPeriodA+1);
+  const p50A = fanA.p50.slice(0, chartPeriodA+1);
+  const p10A = fanA.p10.slice(0, chartPeriodA+1);
+  cA = drawFanChart('chart-a', p10A, p50A, p90A, labA, cA, '#378ADD');
+  // 시퀀스 리스크 선은 별도 추가
+  if(seqActive && cA){
     const sign=seqRetV>=0?'+':'';
     const seqFull=deterPathSeq(investable,wA,ret,periodA,inflowArrA,seqStartV,seqDurV,seqRetV);
-    datasetsA.push({
+    cA.data.datasets.push({
       label:`${seqStartV}년차~${seqStartV+seqDurV}년차 ${sign}${seqRetV}%`,
       data:seqFull.slice(0,chartPeriodA+1),
-      borderColor:'#A855F7',borderWidth:2.5,
+      borderColor:'#A855F7',borderWidth:2,
       borderDash:[6,3],pointRadius:0,fill:false,tension:.3
     });
+    cA.update('none');
   }
-  cA=drawC('chart-a',datasetsA,labA,cA);
   // 유입 시점 차트 주석
   const inflowYears=inflows.filter(e=>e.age>=retAge&&e.age<retAge+periodA).map(e=>Math.floor(e.age-retAge));
   const inflowNote=inflowYears.length>0?`  |  ★ 자산유입: ${[...new Set(inflowYears)].map(y=>y+'년차').join(', ')}`:'';
   $('note-a').textContent=`▲ ${mePstartY}년차 본인 공적연금`+(hasSp?` · ● ${spPstartY}년차 배우자 공적연금`:'')+inflowNote;
   const taxNote='<div style="font-size:11px;color:var(--text3);margin-top:8px">⚠️ 세금 미반영: 연금소득세·금융소득세 등은 계산에 포함되지 않습니다. 실제 수령액은 세후 기준으로 별도 확인하세요.</div>';
+  const runs=1200;
+  const failA=Math.round(runs*(1-probA/100));
+  const probNote=`<div style="font-size:12px;color:var(--text2);margin-top:5px">1,200가지 시장 시나리오 중 <b>${runs-failA}번</b> 성공, <b style="color:var(--red,#D85A30)">${failA}번</b>은 자산 고갈.</div>`;
   let msgA='',clsA='';
   if(probA>=90&&rateA<=4){
     clsA='ok';
-    msgA=`<span class="tag tok">안전</span> ${periodA}년 계획에서 인출률 <b>${rateA.toFixed(2)}%</b>, 생존 확률 <b>${probA}%</b> 목표 달성.`+(inflows.length?` 자산 유입 ${inflows.length}건 (합계 ${fmtW(totalInflowFV)}) 반영.`:'');
+    msgA=`<span class="tag tok">안전</span> ${periodA}년 계획 생존 확률 <b>${probA}%</b> 목표 달성. 인출률 <b>${rateA.toFixed(2)}%</b>.`+(inflows.length?` 자산 유입 ${inflows.length}건 반영.`:'');
   } else if(probA>=90&&rateA>4){
     clsA='ok';
-    msgA=`<span class="tag tok">안전</span> 생존 확률 <b>${probA}%</b> 목표 달성. 인출률 <b>${rateA.toFixed(2)}%</b>는 다소 높으나 수익률이 이를 보완하고 있습니다.`;
+    msgA=`<span class="tag tok">안전</span> 생존 확률 <b>${probA}%</b> 목표 달성. 인출률 <b>${rateA.toFixed(2)}%</b>는 다소 높으나 수익률이 보완하고 있습니다.`;
   } else if(probA>=70){
     clsA='warn';
-    msgA=`<span class="tag twarn">주의</span> ${periodA}년 계획 생존 확률 <b>${probA}%</b>. 추가 필요 자산 약 <b>${fmtW(Math.abs(gapA))}</b>.`;
+    msgA=`<span class="tag twarn">주의</span> ${periodA}년 계획 생존 확률 <b>${probA}%</b>. 보완 필요. 추가 필요 자산 약 <b>${fmtW(Math.abs(gapA))}</b>.`;
   } else {
     clsA='danger';
-    msgA=`<span class="tag tdanger">위험</span> ${periodA}년 고갈 위험(확률 <b>${probA}%</b>). 자산 계획 재검토 필요.`;
+    msgA=`<span class="tag tdanger">위험</span> 생존 확률 <b>${probA}%</b>. 재설계 필요.`;
   }
-  $('adv-a').innerHTML=msgA+taxNote;$('adv-a').className='adv '+clsA;
+  $('adv-a').innerHTML=msgA+probNote+taxNote;$('adv-a').className='adv '+clsA;
 
   if(!hasSp){
     // 배우자 없으면 독거 탭 숨김
@@ -1393,26 +1473,33 @@ function update(){
   $('s-gap').textContent=(gapS>=0?'+':'')+fmtW(Math.abs(gapS));$('s-gap').className='mv '+(gapS>=0?'ok':'danger');$('s-gap-s').textContent=gapS>=0?`${soloName} 충분`:`${soloName} 부족`;
   renderCFTable('cf-body-s',stagesSolo,[{startY:0,amt:sP.total}],infl,[],retAge+soloDeathY);
   const labS=Array.from({length:soloPeriod+1},(_,i)=>i===0?`사망(${soloDeathAge}세)`:'+'+i+'년');
-  // dY = chartPeriodA = soloDeathY → 동반 끝점과 독거 시작점 완전 일치
+  // 동반 p10/p50/p90의 dY 시점 값에서 각각 독거 팬 차트 이어서 계산
   const dY = Math.min(soloDeathY, periodA);
-  cS=drawC('chart-s',[
-    {label:'낙관',data:deterPath(pathOptimA[dY],wS,ret+2,soloPeriod,[]),borderColor:'#1D9E75',borderWidth:2,pointRadius:0,fill:false,tension:.3},
-    {label:'기본',data:deterPath(pathBaseA[dY], wS,ret,  soloPeriod,[]),borderColor:'#BA7517',borderWidth:2.5,pointRadius:0,fill:false,tension:.3},
-    {label:'비관',data:deterPath(pathPessA[dY], wS,ret-2,soloPeriod,[]),borderColor:'#D85A30',borderWidth:2,pointRadius:0,fill:false,tension:.3},
-  ],labS,cS);
+  const fanS90 = mcPaths(pathOptimA[dY], wS, ret, vol, soloPeriod);
+  const fanS50 = mcPaths(pathBaseA[dY],  wS, ret, vol, soloPeriod);
+  const fanS10 = mcPaths(pathPessA[dY],  wS, ret, vol, soloPeriod);
+  // 독거 팬 차트: 각 시작점의 중앙값을 p90/p50/p10으로 사용
+  cS = drawFanChart('chart-s',
+    fanS10.p10,   // 비관 시작의 하위 10%
+    fanS50.p50,   // 중앙 시작의 중앙값
+    fanS90.p90,   // 낙관 시작의 상위 10%
+    labS, cS, '#BA7517'
+  );
   $('note-s').textContent=`잔여 ${fmtW(assetAtDeath)} | ${soloName} 홀로 ${soloPeriod}년 | 공적연금 월 ${soloPenAmt}만원`;
+  const failS=Math.round(runs*(1-probS/100));
+  const probNoteS=`<div style="font-size:12px;color:var(--text2);margin-top:5px">1,200가지 시장 시나리오 중 <b>${runs-failS}번</b> 성공, <b style="color:var(--red,#D85A30)">${failS}번</b>은 자산 고갈.</div>`;
   let msgS='',clsS='';
   if(probS>=90){
     clsS='ok';
     msgS=`<span class="tag tok">안전</span> ${soloName} ${soloPeriod}년 생존 확률 <b>${probS}%</b>.`;
   } else if(probS>=70){
     clsS='warn';
-    msgS=`<span class="tag twarn">주의</span> ${soloName} 확률 <b>${probS}%</b> (부부 대비 <b>${diffS}%p</b>). 유족연금·종신보험 보완 검토.`;
+    msgS=`<span class="tag twarn">주의</span> ${soloName} 확률 <b>${probS}%</b> (부부 대비 <b>${diffS}%p</b>). 보완 필요.`;
   } else {
     clsS='danger';
-    msgS=`<span class="tag tdanger">위험</span> ${soloName} 고갈 위험(확률 <b>${probS}%</b>, 부부 대비 <b>${diffS}%p</b>). 부족 <b>${fmtW(Math.abs(gapS))}</b>.`;
+    msgS=`<span class="tag tdanger">위험</span> ${soloName} 생존 확률 <b>${probS}%</b> (부부 대비 <b>${diffS}%p</b>). 재설계 필요.`;
   }
-  $('adv-s').innerHTML=msgS;$('adv-s').className='adv '+clsS;
+  $('adv-s').innerHTML=msgS+probNoteS;$('adv-s').className='adv '+clsS;
 
   // A vs 독거 비교
   $('cmp-a-p').textContent=probA+'%';$('cmp-a-p').style.color=probColor(probA);$('cmp-a-r').textContent=rateA.toFixed(2)+'%';$('cmp-a-period').textContent=periodA+'년';
@@ -1424,11 +1511,16 @@ function update(){
 }
 
 // 이벤트 리스너
-['s-pension-own','s-pension-survivor','s-pension-etc'].forEach(id=>{const el=$(id);if(el)el.addEventListener('input',update);});
+// 디바운싱: mcPaths 1,200회 시뮬레이션을 슬라이더마다 즉시 실행하면 버벅임
+// 150ms 후 마지막 입력만 실행
+let _updateTimer=null;
+function debouncedUpdate(){clearTimeout(_updateTimer);_updateTimer=setTimeout(update,150);}
+
+['s-pension-own','s-pension-survivor','s-pension-etc'].forEach(id=>{const el=$(id);if(el)el.addEventListener('input',debouncedUpdate);});
 ['age','retire','asset','save','sp-age','sp-retire','sp-save','me-life','sp-life',
  'ret-simple','vol-simple','ret-retire','vol-retire','me-base','me-early','me-defer','sp-base','sp-early','sp-defer',
  'buffer','infl','inherit'
-].forEach(id=>{const el=$(id);if(el)el.addEventListener('input',update);});
+].forEach(id=>{const el=$(id);if(el)el.addEventListener('input',debouncedUpdate);});
 
 // 초기화
 buildStageGrid();
