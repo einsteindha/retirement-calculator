@@ -587,7 +587,8 @@ function stageMonInput(id,val){stageState[id].mon=+val;$('stmon-lbl-'+id).textCo
 // 단계 기간 제한 (5번 수정)
 function clampStageYears(retireAge,meLife,spLife){
   const mePeriod=Math.max(1,meLife-retireAge);
-  const spLifeFromRet=hasSp?spLife-retireAge:0;
+  const age=+$('age').value, spAge=+$('sp-age').value;
+  const spLifeFromRet=hasSp?Math.max(0,spLife-spAge-(retireAge-age)):0;
   const periodA=hasSp?Math.max(mePeriod,spLifeFromRet):mePeriod;
   // 독거 기간: 현재 나이 기준 절대 사망 연도로 비교
   let soloPeriod=mePeriod;
@@ -918,19 +919,55 @@ function randNorm(){
 }
 function mc(start,w,ret,vol,yrs,inherit,inflowArr=[],runs=1200){
   let ok=0;
-  // 로그정규분포 기반 수익률: 실제 자산 수익률의 특성 반영
-  const mu=(ret/100)-0.5*Math.pow(vol/100,2); // 로그정규 평균 조정
+  const mu=(ret/100)-0.5*Math.pow(vol/100,2);
   const sigma=vol/100;
   for(let i=0;i<runs;i++){
     let b=start,alive=true;
     for(let y=1;y<=yrs;y++){
-      // 로그정규분포: e^(mu+sigma*Z) - 1 (Z~N(0,1))
       const z=randNorm();
       const r=(Math.exp(mu+sigma*z)-1)*100;
       b=b*(1+r/100)-w[y-1];
       if(inflowArr[y-1]) b+=inflowArr[y-1];
       if(b<0){alive=false;break;}
     }
+    if(alive&&b>=inherit)ok++;
+  }
+  return ok/runs;
+}
+
+// 동반기간 + 독거기간을 하나의 시뮬레이션으로 이어서 계산
+// deathY: 동반기간 중 선행 사망 연도 (동반 시뮬레이션 yrs 내)
+// wSolo: 독거 기간 인출액 배열
+// soloPeriod: 독거 기간
+function mcChained(start, wA, deathY, wSolo, soloPeriod, ret, vol, inherit, inflowArrA=[], runs=1200){
+  let ok=0;
+  const mu=(ret/100)-0.5*Math.pow(vol/100,2);
+  const sigma=vol/100;
+  const totalYrs = deathY + soloPeriod;
+
+  for(let i=0;i<runs;i++){
+    let b=start, alive=true;
+
+    // 1단계: 동반 기간 (0 ~ deathY)
+    for(let y=1;y<=deathY;y++){
+      const z=randNorm();
+      const r=(Math.exp(mu+sigma*z)-1)*100;
+      b=b*(1+r/100)-wA[y-1];
+      if(inflowArrA[y-1]) b+=inflowArrA[y-1];
+      if(b<0){alive=false;break;}
+    }
+
+    // 2단계: 독거 기간 (deathY+1 ~ deathY+soloPeriod)
+    // 동반 기간에서 이어진 자산으로 독거 현금흐름 적용
+    if(alive && soloPeriod>0){
+      for(let y=1;y<=soloPeriod;y++){
+        const z=randNorm();
+        const r=(Math.exp(mu+sigma*z)-1)*100;
+        b=b*(1+r/100)-wSolo[y-1];
+        if(b<0){alive=false;break;}
+      }
+    }
+
     if(alive&&b>=inherit)ok++;
   }
   return ok/runs;
@@ -992,7 +1029,8 @@ function update(){
   const buf=+$('buffer').value,infl=+$('infl').value,inherit=+$('inherit').value*10000;
 
   const mePeriod=Math.max(1,meLife-retAge);
-  const spLifeFromMeRet=hasSp?spLife-retAge:0;
+  // 배우자 기대수명을 본인 은퇴 기준으로 환산 (나이 차이 반영)
+  const spLifeFromMeRet=hasSp?Math.max(0,spLife-spAge-(retAge-age)):0;
   const periodA=hasSp?Math.max(mePeriod,spLifeFromMeRet):mePeriod;
 
   // 독거 시나리오: 기대수명 기준 자동 결정
@@ -1000,22 +1038,24 @@ function update(){
   // 배우자 없으면: 본인 단독 시나리오
   let soloWho, soloDeathY, soloPeriod, soloRetAge;
   if(hasSp){
-    const age = +$('age').value;
-    const spAge = +$('sp-age').value;
-    const meDiesAtYear = meLife - age;
-    const spDiesAtYear = spLife - spAge;
+    const meDiesAtYear = meLife - age;   // 현재부터 본인 사망까지 년수
+    const spDiesAtYear = spLife - spAge; // 현재부터 배우자 사망까지 년수
+    const ytrMe = retAge - age;          // 본인 은퇴까지 남은 년수
 
     if(meDiesAtYear <= spDiesAtYear){
+      // 본인이 먼저 사망 → 배우자 독거
       soloWho='sp';
-      soloDeathY = meLife - retAge;
+      soloDeathY = meDiesAtYear - ytrMe;  // 본인 은퇴 기준 본인 사망 연도
       soloPeriod = Math.max(0, spDiesAtYear - meDiesAtYear);
       soloRetAge = retAge;
     } else {
+      // 배우자가 먼저 사망 → 본인 독거
       soloWho='me';
-      soloDeathY = spLife - retAge + (spAge - age);
+      soloDeathY = spDiesAtYear - ytrMe;  // 본인 은퇴 기준 배우자 사망 연도
       soloPeriod = Math.max(0, meDiesAtYear - spDiesAtYear);
       soloRetAge = retAge;
     }
+    soloDeathY = Math.max(0, soloDeathY);
   } else {
     soloWho='me'; soloDeathY=0; soloPeriod=mePeriod; soloRetAge=retAge;
   }
@@ -1245,19 +1285,28 @@ function update(){
   $('a-buf').textContent=fmtW(bufAmt);$('a-evt').textContent=fmtW(totalEvtFV);
   $('a-gap').textContent=(gapA>=0?'+':'')+fmtW(Math.abs(gapA));$('a-gap').className='mv '+(gapA>=0?'ok':'danger');$('a-gap-s').textContent=gapA>=0?'충분':'추가 필요';
   renderCFTable('cf-body-a',stagesA,pensionsA,infl,events,retAge);
-  const labA=Array.from({length:periodA+1},(_,i)=>i===0?'은퇴':i+'년');
+  // 동반 차트: 배우자 있고 독거기간 있으면 선행사망 시점까지만 표시
+  // 그래야 독거 차트와 연속성 보장
+  const chartPeriodA = (hasSp && soloPeriod>0) ? Math.min(soloDeathY, periodA) : periodA;
+  const labA=Array.from({length:chartPeriodA+1},(_,i)=>i===0?'은퇴':i+'년');
   // 시퀀스 리스크 데이터 저장
   _seqChartData={investable,wA,ret,periodA,inflowArrA};
+  // 전체 경로 배열 (periodA 기준) — 독거 시작점 추출 및 차트 슬라이스에 사용
+  const pathOptimA=deterPath(investable,wA,ret+2,periodA,inflowArrA);
+  const pathBaseA =deterPath(investable,wA,ret,  periodA,inflowArrA);
+  const pathPessA =deterPath(investable,wA,ret-2,periodA,inflowArrA);
+  // 동반 차트는 chartPeriodA까지만 슬라이스
   const datasetsA=[
-    {label:'낙관',data:deterPath(investable,wA,ret+2,periodA,inflowArrA),borderColor:'#1D9E75',borderWidth:2,pointRadius:0,fill:false,tension:.3},
-    {label:'기본',data:deterPath(investable,wA,ret,periodA,inflowArrA),borderColor:'#378ADD',borderWidth:2.5,pointRadius:0,fill:false,tension:.3},
-    {label:'비관',data:deterPath(investable,wA,ret-2,periodA,inflowArrA),borderColor:'#D85A30',borderWidth:2,pointRadius:0,fill:false,tension:.3},
+    {label:'낙관',data:pathOptimA.slice(0,chartPeriodA+1),borderColor:'#1D9E75',borderWidth:2,pointRadius:0,fill:false,tension:.3},
+    {label:'기본',data:pathBaseA.slice(0,chartPeriodA+1), borderColor:'#378ADD',borderWidth:2.5,pointRadius:0,fill:false,tension:.3},
+    {label:'비관',data:pathPessA.slice(0,chartPeriodA+1), borderColor:'#D85A30',borderWidth:2,pointRadius:0,fill:false,tension:.3},
   ];
   if(seqActive){
     const sign=seqRetV>=0?'+':'';
+    const seqFull=deterPathSeq(investable,wA,ret,periodA,inflowArrA,seqStartV,seqDurV,seqRetV);
     datasetsA.push({
       label:`${seqStartV}년차~${seqStartV+seqDurV}년차 ${sign}${seqRetV}%`,
-      data:deterPathSeq(investable,wA,ret,periodA,inflowArrA,seqStartV,seqDurV,seqRetV),
+      data:seqFull.slice(0,chartPeriodA+1),
       borderColor:'#A855F7',borderWidth:2.5,
       borderDash:[6,3],pointRadius:0,fill:false,tension:.3
     });
@@ -1291,8 +1340,7 @@ function update(){
   }
 
   // ── 독거 시나리오 (기대수명 기준 자동 결정)
-  const pathAbase=deterPath(investable,wA,ret,periodA,inflowArrA);
-  const assetAtDeath=pathAbase[Math.min(soloDeathY,periodA)];
+  const assetAtDeath=pathBaseA[Math.min(soloDeathY,periodA)];
   const sP=getSoloPension();
   // 섹션6 레이블 — soloWho 기준 동적 업데이트
   const soloLabel = soloWho==='sp'?'배우자':'본인';
@@ -1310,7 +1358,8 @@ function update(){
   const stagesSolo=STAGES.filter(s=>s.solo);
   const wS=buildW(stagesSolo,[{startY:0,amt:sP.total}],soloPeriod,infl,[],retAge+soloDeathY);
   const rateS=assetAtDeath>0?(wS[0]/assetAtDeath)*100:0;
-  const probS=Math.round(mc(assetAtDeath,wS,ret,vol,soloPeriod,inherit,[])*100);
+  // mcChained: 동반 기간 시뮬레이션에서 이어서 독거 기간 계산
+  const probS=Math.round(mcChained(investable,wA,Math.min(soloDeathY,periodA),wS,soloPeriod,ret,vol,inherit,inflowArrA)*100);
   const avgWS=wS.reduce((a,b)=>a+b,0)/wS.length;
   const pvFS=(1-Math.pow(1+netRet/100,-soloPeriod))/(netRet/100);
   const neededS=avgWS*pvFS+inherit*Math.pow(1+netRet/100,-soloPeriod);
@@ -1344,10 +1393,12 @@ function update(){
   $('s-gap').textContent=(gapS>=0?'+':'')+fmtW(Math.abs(gapS));$('s-gap').className='mv '+(gapS>=0?'ok':'danger');$('s-gap-s').textContent=gapS>=0?`${soloName} 충분`:`${soloName} 부족`;
   renderCFTable('cf-body-s',stagesSolo,[{startY:0,amt:sP.total}],infl,[],retAge+soloDeathY);
   const labS=Array.from({length:soloPeriod+1},(_,i)=>i===0?`사망(${soloDeathAge}세)`:'+'+i+'년');
+  // dY = chartPeriodA = soloDeathY → 동반 끝점과 독거 시작점 완전 일치
+  const dY = Math.min(soloDeathY, periodA);
   cS=drawC('chart-s',[
-    {label:'낙관',data:deterPath(assetAtDeath,wS,ret+2,soloPeriod,[]),borderColor:'#1D9E75',borderWidth:2,pointRadius:0,fill:false,tension:.3},
-    {label:'기본',data:deterPath(assetAtDeath,wS,ret,soloPeriod,[]),borderColor:'#BA7517',borderWidth:2.5,pointRadius:0,fill:false,tension:.3},
-    {label:'비관',data:deterPath(assetAtDeath,wS,ret-2,soloPeriod,[]),borderColor:'#D85A30',borderWidth:2,pointRadius:0,fill:false,tension:.3},
+    {label:'낙관',data:deterPath(pathOptimA[dY],wS,ret+2,soloPeriod,[]),borderColor:'#1D9E75',borderWidth:2,pointRadius:0,fill:false,tension:.3},
+    {label:'기본',data:deterPath(pathBaseA[dY], wS,ret,  soloPeriod,[]),borderColor:'#BA7517',borderWidth:2.5,pointRadius:0,fill:false,tension:.3},
+    {label:'비관',data:deterPath(pathPessA[dY], wS,ret-2,soloPeriod,[]),borderColor:'#D85A30',borderWidth:2,pointRadius:0,fill:false,tension:.3},
   ],labS,cS);
   $('note-s').textContent=`잔여 ${fmtW(assetAtDeath)} | ${soloName} 홀로 ${soloPeriod}년 | 공적연금 월 ${soloPenAmt}만원`;
   let msgS='',clsS='';
