@@ -18,10 +18,16 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;line-height:1.6}
-.header{height:70px;background:#0D1B3E;color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
-.header-title{font-size:17px;font-weight:700;color:#E8C97E}
-.header-sub{font-size:12px;color:#B0BAD4;margin-top:2px}
+.header{min-height:60px;height:auto;background:#0D1B3E;color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.header-title{font-size:15px;font-weight:700;color:#E8C97E;white-space:nowrap}
+.header-sub{font-size:11px;color:#B0BAD4;margin-top:1px}
 .header-badge{background:#C9A84C;color:#0D1B3E;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap}
+@media(max-width:600px){
+  .header{padding:8px 12px}
+  .header-title{font-size:13px}
+  .header-sub{font-size:10px}
+  .header-badge{font-size:10px;padding:3px 8px}
+}
 .container{display:flex;height:calc(100% - 70px)}
 .split-left{flex:0 0 55%;height:100%;overflow-y:auto;padding:20px 24px 60px}
 .split-right{flex:0 0 45%;height:100%;overflow-y:auto;padding:20px 24px 60px;border-left:1px solid var(--border);background:var(--bg3)}
@@ -31,6 +37,13 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   .container{flex-direction:column;height:auto}
   .split-left,.split-right{flex:none;width:100%;height:auto;overflow-y:visible}
   .split-right{border-left:none;border-top:2px solid var(--border)}
+}
+@media(max-width:600px){
+  .rb{grid-template-columns:repeat(2,1fr)}
+  .mv{font-size:16px}
+  .sc-tabs{flex-direction:column}
+  .sc-btn{border-right:none;border-bottom:1px solid var(--border)}
+  .sc-btn:last-child{border-bottom:none}
 }
 /* 시나리오 탭 — 밝은 배경에서 텍스트 가시성 */
 .sc-btn.act-a{background:#EBF3FF;color:#185FA5}
@@ -169,7 +182,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 .sh-a{background:#EBF3FF;border-left:3px solid var(--blue)}
 .sh-b{background:#FAECE7;border-left:3px solid var(--red)}
 .sh-c{background:#FFF3CD;border-left:3px solid var(--amber)}
-.rb{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:1.2rem}
+.rb{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:7px;margin-bottom:1.2rem}
 .met{background:var(--bg2);border-radius:var(--radius);padding:11px 13px}
 .ml{font-size:12px;color:var(--text2);margin-bottom:3px}.mv{font-size:20px;font-weight:700;line-height:1.2}.ms{font-size:11px;color:var(--text3);margin-top:3px}
 .ok{color:var(--green)}.warn{color:var(--amber)}.danger{color:var(--red)}
@@ -184,13 +197,19 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 .tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;margin-right:5px}
 .tok{background:#E1F5EE;color:#0F6E56}.twarn{background:#FFF3CD;color:#7A5800}.tdanger{background:#FAECE7;color:#993C1D}
 .divider{height:1px;background:var(--border);margin:1.4rem 0}
-.cmp3{display:none;grid-template-columns:1fr 1px 1fr 1px 1fr;background:var(--bg2);border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:1.4rem;overflow:hidden}
-.cmp3-col{padding:11px 13px}.cmp3-sep{background:var(--border)}
-.cmp3-ttl{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:7px}
-.cmp3-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;font-size:12px}
-.cmp3-lbl{color:var(--text2)}.cmp3-val{font-weight:600}
+.cmp3{display:none;grid-template-columns:1fr 1px 1fr;background:var(--bg2);border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:1.4rem;overflow:hidden}
+.cmp3-col{padding:11px 13px;min-width:0}
+.cmp3-sep{background:var(--border)}
+.cmp3-ttl{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmp3-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;font-size:12px;gap:4px;flex-wrap:wrap}
+.cmp3-lbl{color:var(--text2);white-space:nowrap}.cmp3-val{font-weight:600;white-space:nowrap}
 .cmp3-period{font-size:10px;color:var(--text3);margin-top:3px}
 .cmp3-msg{grid-column:1/-1;padding:8px 13px;border-top:1px solid var(--border);font-size:12px;line-height:1.6}
+@media(max-width:480px){
+  .cmp3{grid-template-columns:1fr}
+  .cmp3-sep{display:none}
+  .cmp3-col+.cmp3-col{border-top:1px solid var(--border)}
+}
 .cf-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:9px}
 .cf-table th{padding:5px 7px;text-align:left;font-weight:600;font-size:10px;color:var(--text2);border-bottom:1px solid var(--border);background:var(--bg2)}
 .cf-table td{padding:5px 7px;border-bottom:1px solid var(--border)}
@@ -213,7 +232,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
     <div class="header-sub">정원준 CFP · 몬테카를로 시뮬레이션 기반</div>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
-    <button onclick="openManual()" style="padding:5px 12px;font-size:12px;font-weight:600;background:transparent;color:#E8C97E;border:1px solid #C9A84C;border-radius:20px;cursor:pointer;white-space:nowrap">📖 사용 설명서</button>
+    <button onclick="openManual()" style="padding:4px 10px;font-size:11px;font-weight:600;background:transparent;color:#E8C97E;border:1px solid #C9A84C;border-radius:20px;cursor:pointer;white-space:nowrap">📖 설명서</button>
     <span class="header-badge">상담용 참고자료</span>
   </div>
 </div>
