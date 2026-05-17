@@ -325,9 +325,9 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
       </div>
       <!-- 직역연금 전용 -->
       <div id="me-pub-section" style="display:none;margin-bottom:8px">
-        <div class="sn">직역연금은 퇴직 즉시 수령이 원칙입니다. 조기·연기 전략 없이 월 수령액만 입력하세요.</div>
+        <div class="sn">공무원연금 기준 퇴직연도별 개시연령이 자동 계산됩니다. 군인·사학·별정우체국 등 다른 직역연금은 해당 공단에 확인 후 슬라이더로 직접 조정하세요.</div>
         <div class="il" style="margin-top:8px">수령 시작 나이 <span class="iv" id="l-me-pub-age">62세</span></div>
-        <input type="range" id="me-pub-age" min="40" max="80" step="1" value="62" oninput="$('l-me-pub-age').textContent=this.value+'세';debouncedUpdate()">
+        <input type="range" id="me-pub-age" min="40" max="80" step="1" value="62" oninput="this.dataset.userSet=1;$('l-me-pub-age').textContent=this.value+'세';debouncedUpdate()">
       </div>
       <div class="il"><span id="lbl-me-base-age">기준 연금액 (65세)</span> <span class="iv" id="l-me-base">80만원</span></div><input type="range" id="me-base" min="0" max="300" step="5" value="80">
       <div class="pdg"><div class="pdi"><div class="pdi-l">수령 시작</div><div class="pdi-v" id="me-sa">65세</div><div class="pdi-s" id="me-ml">정상수령</div></div><div class="pdi"><div class="pdi-l">월 수령액</div><div class="pdi-v" id="me-amt">80만원</div><div class="pdi-s" id="me-adj">0%</div></div><div class="pdi"><div class="pdi-l">공백 기간</div><div class="pdi-v" id="me-gap">3년</div><div class="pdi-s">은퇴~연금 전</div></div><div class="pdi"><div class="pdi-l">손익분기</div><div class="pdi-v" id="me-be">—</div><div class="pdi-s" id="me-be-s">—</div></div></div>
@@ -347,9 +347,9 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
       </div>
       <!-- 직역연금 전용 -->
       <div id="sp-pub-section" style="display:none;margin-bottom:8px">
-        <div class="sn">직역연금은 퇴직 즉시 수령이 원칙입니다. 조기·연기 전략 없이 월 수령액만 입력하세요.</div>
+        <div class="sn">공무원연금 기준 퇴직연도별 개시연령이 자동 계산됩니다. 군인·사학·별정우체국 등 다른 직역연금은 해당 공단에 확인 후 슬라이더로 직접 조정하세요.</div>
         <div class="il" style="margin-top:8px">수령 시작 나이 <span class="iv" id="l-sp-pub-age">60세</span></div>
-        <input type="range" id="sp-pub-age" min="40" max="80" step="1" value="60" oninput="$('l-sp-pub-age').textContent=this.value+'세';debouncedUpdate()">
+        <input type="range" id="sp-pub-age" min="40" max="80" step="1" value="60" oninput="this.dataset.userSet=1;$('l-sp-pub-age').textContent=this.value+'세';debouncedUpdate()">
       </div>
       <div class="il"><span id="lbl-sp-base-age">기준 연금액 (65세)</span> <span class="iv" id="l-sp-base">60만원</span></div><input type="range" id="sp-base" min="0" max="300" step="5" value="60">
       <div class="pdg"><div class="pdi"><div class="pdi-l">수령 시작</div><div class="pdi-v" id="sp-sa">65세</div><div class="pdi-s" id="sp-ml">정상수령</div></div><div class="pdi"><div class="pdi-l">월 수령액</div><div class="pdi-v" id="sp-amt">60만원</div><div class="pdi-s" id="sp-adj">0%</div></div><div class="pdi"><div class="pdi-l">공백 기간</div><div class="pdi-v" id="sp-gap">—</div><div class="pdi-s">배우자 은퇴~연금 전</div></div><div class="pdi"><div class="pdi-l">손익분기</div><div class="pdi-v" id="sp-be">—</div><div class="pdi-s" id="sp-be-s">—</div></div></div>
@@ -588,8 +588,16 @@ function setPenType(who, type){
   // 섹션 표시/숨김
   $(who+'-nps-section').style.display = type==='nps' ? '' : 'none';
   $(who+'-pub-section').style.display = type==='pub' ? '' : 'none';
-  // 직역연금이면 손익분기/조기연기 관련 항목 숨김
-  const pdg = $(who==='me'?'me-sa':'sp-sa');
+  // 직역연금 선택 시 수령 시작 나이를 퇴직연도 기반 개시연령으로 자동 설정
+  if(type==='pub'){
+    const currentAge = who==='me' ? +$('age').value : +$('sp-age').value;
+    const retireAge  = who==='me' ? +$('retire').value : +$('sp-retire').value;
+    const autoAge    = getPublicPensionAge(retireAge, currentAge);
+    const pubAgeEl   = $(who+'-pub-age');
+    const pubAgeLbl  = $('l-'+who+'-pub-age');
+    if(pubAgeEl){ pubAgeEl.value = autoAge; pubAgeEl.min = retireAge; }
+    if(pubAgeLbl){ pubAgeLbl.textContent = autoAge+'세'; }
+  }
   debouncedUpdate();
 }
 let eventId=0,cashflowId=0,fixedPensionId=0,inflowId=0;
@@ -854,6 +862,17 @@ function getPortParams(phase='retire'){
   // phase: 'accum'(적립기) or 'retire'(인출기)
   if(phase==='accum') return{ret:+$('ret-simple').value,vol:+$('vol-simple').value};
   return{ret:+$('ret-retire').value,vol:+$('vol-retire').value};
+}
+
+// ── 퇴직연도 기반 직역연금(공무원연금 기준) 개시연령 계산
+function getPublicPensionAge(retireAge, currentAge){
+  const retireYear = new Date().getFullYear() + (retireAge - currentAge);
+  if(retireYear <= 2021) return 60;
+  if(retireYear <= 2023) return 61;
+  if(retireYear <= 2026) return 62;
+  if(retireYear <= 2029) return 63;
+  if(retireYear <= 2032) return 64;
+  return 65;
 }
 
 // ── 출생연도 기반 정상수급 나이 계산
@@ -1454,12 +1473,25 @@ function update(){
   if(meDBtn) meDBtn.innerHTML='연기<br><span style="font-size:10px;font-weight:400">'+(meNormalAge+1)+'~'+(meNormalAge+5)+'세</span>';
   if(spDBtn) spDBtn.innerHTML='연기<br><span style="font-size:10px;font-weight:400">'+(spNormalAge+1)+'~'+(spNormalAge+5)+'세</span>';
 
-  // 기준 연금액 라벨 동적 업데이트
+  // 기준 연금액 라벨 동적 업데이트 — 직역연금은 '월 수령액'으로
   const meBLblEl=$('lbl-me-base-age'), spBLblEl=$('lbl-sp-base-age');
-  if(meBLblEl) meBLblEl.textContent='기준 연금액 ('+meNormalAge+'세)';
-  if(spBLblEl) spBLblEl.textContent='기준 연금액 ('+spNormalAge+'세)';
+  if(meBLblEl) meBLblEl.textContent = mePenType==='pub' ? '월 수령액' : '기준 연금액 ('+meNormalAge+'세)';
+  if(spBLblEl) spBLblEl.textContent = spPenType==='pub' ? '월 수령액' : '기준 연금액 ('+spNormalAge+'세)';
 
-  // 직역연금이면 수령 시작 나이 = pub-age 슬라이더, 감액/증액 없음
+  // 직역연금 — 나이/은퇴나이 변경 시 개시연령 자동 업데이트 (사용자가 슬라이더로 조정 가능)
+  if(mePenType==='pub'){
+    const autoAge = getPublicPensionAge(retAge, age);
+    const el = $('me-pub-age'), lbl = $('l-me-pub-age');
+    // 사용자가 직접 조정하지 않은 경우(슬라이더가 이전 자동값과 같으면) 자동 업데이트
+    if(el && +el.dataset.userSet !== 1){ el.value = autoAge; el.min = retAge; }
+    if(lbl && el) lbl.textContent = el.value+'세';
+  }
+  if(hasSp && spPenType==='pub'){
+    const autoAge = getPublicPensionAge(spRet, spAge);
+    const el = $('sp-pub-age'), lbl = $('l-sp-pub-age');
+    if(el && +el.dataset.userSet !== 1){ el.value = autoAge; el.min = spRet; }
+    if(lbl && el) lbl.textContent = el.value+'세';
+  }
   const mePubAge = +($('me-pub-age')?.value || retAge);
   const spPubAge = +($('sp-pub-age')?.value || spRet);
   const meP = mePenType==='pub'
@@ -1827,7 +1859,7 @@ update();
       <h3>1 · 본인 정보</h3>
       <ul>
         <li><b>현재 나이</b>: 만 나이로 입력하세요.</li>
-        <li><b>은퇴 예정 나이</b>: 이미 은퇴하셨다면 현재 나이와 같게 입력하세요.</li>
+        <li><b>은퇴 예정 나이</b>: <b>주된 일자리(메인잡)에서 은퇴하는 나이</b>를 입력하세요. 이미 은퇴하셨다면 현재 나이와 같게 입력하세요. 은퇴 후 가교 일자리(브릿지잡) 수입이 있다면 <b>10번 추가 현금흐름 수입</b>에 별도로 입력하세요.</li>
         <li><b>현시점 은퇴준비자금</b>: 현재 보유한 투자·저축 자산 합계입니다. 거주용 부동산은 제외하세요. 단, 향후 다운사이징으로 목돈이 생기는 경우 <b>9번 일시 자산 유입</b>에, 주택연금으로 활용할 계획이라면 <b>11번 정액 수령 연금</b>에 별도로 반영하세요.</li>
         <li><b>은퇴까지 연평균 저축</b>: 은퇴 전까지 매년 추가로 쌓을 금액입니다. 이미 은퇴하셨다면 0으로 두세요.</li>
       </ul>
@@ -1856,7 +1888,7 @@ update();
 
       <h3>5 · 공적연금 수령 전략</h3>
       <ul>
-        <li><b>국민연금 / 직역연금 선택</b>: 직역연금(공무원·군인·사학·별정우체국)은 퇴직 즉시 수령이 원칙으로 조기·연기 전략이 없습니다.</li>
+        <li><b>국민연금 / 직역연금 선택</b>: 직역연금(공무원·군인·사학·별정우체국)은 조기·연기 전략이 없습니다. 공무원연금 기준 퇴직연도별 개시연령이 자동 계산되며, 다른 직역연금 가입자는 해당 공단에 확인 후 슬라이더로 직접 조정하세요.</li>
         <li><b>국민연금</b>: 출생연도에 따라 정상수급 나이가 자동 계산됩니다(1969년생 이후 65세).
           <ul>
             <li><b>조기수령</b>: 최대 5년 일찍 받는 대신 연 6%씩 감액. 손익분기점이 자동 계산됩니다.</li>
