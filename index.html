@@ -2114,7 +2114,7 @@ const fullP10 = [...accumPath, ...p10A.slice(1)];
   $('cmp-s-ttl').textContent=`독거 (${soloName} 홀로)`;
   $('cmp-s-p').textContent=probS+'%';$('cmp-s-p').style.color=probColor(probS);$('cmp-s-r').textContent=rateS.toFixed(2)+'%';$('cmp-s-period').textContent=`${soloName} 잔여 ${soloPeriod}년`;
   if(probS<70){$('cmp3-msg').textContent=`독거 시나리오에서 ${soloName} 고갈 위험 ${probS}% (A 대비 ${diffS}%p). 배우자 보호 설계 필수.`;$('cmp3-msg').style.color=probColor(probS);}
-  else if(probS<90){$('cmp3-msg').textContent=`독거 시나리오에서 ${soloName} 확률 ${probS}%로 낮아집니다. 유족연금·종신보험으로 보완하세요.`;$('cmp3-msg').style.color=probColor(probS);}
+  else if(probS<90){$('cmp3-msg').textContent=`독거 시나리오에서 ${soloName} 확률 ${probS}%로 낮아집니다. 연금액 증액·생명보험으로 보완하세요.`;$('cmp3-msg').style.color=probColor(probS);}
   else{$('cmp3-msg').textContent=`부부/동반 함께·독거 모두 90% 이상 — 두 분 모두 잘 보호되고 있습니다.`;$('cmp3-msg').style.color='#1D9E75';}
 }
 
@@ -2292,7 +2292,7 @@ update();
       <p>은퇴 초기에 하락장이 오면 이후 회복이 어렵습니다. 차트의 수익률 시나리오 기능으로 특정 기간에 마이너스 수익률이 발생했을 때 자산이 어떻게 변하는지 직접 확인해보세요.</p>
 
       <h3>독거 시나리오</h3>
-      <p>배우자 사망 후 홀로 남은 기간의 시뮬레이션입니다. 부부 함께 시나리오와 성공확률을 비교해 유족연금·종신보험 등 추가 보장이 필요한지 확인하세요.</p>
+      <p>배우자 사망 후 홀로 남은 기간의 시뮬레이션입니다. 부부 함께 시나리오와 성공확률을 비교해 연금액 증액·생명보험 등 추가 보장이 필요한지 확인하세요.</p>
 
       <div class="modal-divider"></div>
       <div class="modal-note">
