@@ -1174,13 +1174,13 @@ function applySeq(){
   seqRetV=+($('seq-ret').value)||0;
   seqActive=true;
   const leg=$('seq-leg');if(leg)leg.style.display='';
-  updateSeqChart();
+  debouncedUpdate();
 }
 
 function clearSeq(){
   seqActive=false;
   const leg=$('seq-leg');if(leg)leg.style.display='none';
-  updateSeqChart();
+  debouncedUpdate();
   const prev=$('seq-preview');
   if(prev)prev.textContent='— 값을 입력하고 적용 버튼을 누르세요';
 }
