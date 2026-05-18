@@ -1940,9 +1940,12 @@ function update(){
   const labA = [...labAccum, ...labRetire.slice(1)];
 
   // 팬 차트 데이터에 적립기 경로 앞에 붙이기
-  const fullP90 = [...accumPath, ...p90A.slice(1)];
-  const fullP50 = [...accumPath, ...p50A.slice(1)];
-  const fullP10 = [...accumPath, ...p10A.slice(1)];
+  const p90Adj = [assetAtRet, ...p90A.slice(1)];
+const p50Adj = [assetAtRet, ...p50A.slice(1)];
+const p10Adj = [assetAtRet, ...p10A.slice(1)];
+const fullP90 = [...accumPath, ...p90Adj.slice(1)];
+const fullP50 = [...accumPath, ...p50Adj.slice(1)];
+const fullP10 = [...accumPath, ...p10Adj.slice(1)];
 
   // 상속 목표 곡선 — 본인 사망 시점(ytr+mePeriod)까지만 표시, 이후 null
   const inheritTotalYears = ytr + mePeriod; // 현재부터 본인 사망까지 총 연수
