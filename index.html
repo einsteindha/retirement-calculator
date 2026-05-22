@@ -263,7 +263,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 <div class="header">
   <div>
     <div class="header-title">은퇴 인출 시뮬레이터</div>
-    <div class="header-sub">정원준 CFP · 몬테카를로 시뮬레이션 기반</div>
+    <div class="header-sub">HERITAGE · 몬테카를로 시뮬레이션 기반</div>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
     <button onclick="openManual()" style="padding:4px 10px;font-size:11px;font-weight:600;background:transparent;color:#E8C97E;border:1px solid #C9A84C;border-radius:20px;cursor:pointer;white-space:nowrap">📖 설명서</button>
@@ -279,7 +279,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
   <div class="pt">1 · 본인 정보</div>
   <div class="g2">
     <div class="ic"><div class="il">현재 나이 <span class="iv" id="l-age">55세</span></div><input type="range" id="age" min="20" max="90" step="1" value="55"></div>
-    <div class="ic"><div class="il">은퇴 예정 나이 <span class="iv" id="l-retire">62세</span></div><input type="range" id="retire" min="40" max="90" step="1" value="62"><div class="err" id="err-retire"></div></div>
+    <div class="ic"><div class="il">은퇴 예정 나이 <span class="iv" id="l-retire">62세</span></div><input type="range" id="retire" min="20" max="90" step="1" value="62"><div class="err" id="err-retire"></div></div>
     <div class="ic"><div class="il">현시점 은퇴준비자금 <span class="iv" id="l-asset">5억원</span></div><input type="range" id="asset" min="0" max="100" step="1" value="5" style="width:100%;margin-top:4px" oninput="onSliderChange('asset','num-asset',10000)"><div class="slider-num-row"><input class="num-input" id="num-asset" type="number" min="0" step="100" value="50000" oninput="onNumChange('num-asset','asset',10000)" onblur="onNumBlur('num-asset','asset',10000,0)"><span class="num-unit">만원</span></div></div>
     <div class="ic save-group" style="grid-column:1/-1">
       <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:9px">은퇴까지 저축 설정</div>
@@ -317,7 +317,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
   <div class="sp-sec" id="sp-sec">
     <div class="g2">
       <div class="ic"><div class="il">배우자 현재 나이 <span class="iv" id="l-sp-age">52세</span></div><input type="range" id="sp-age" min="20" max="90" step="1" value="52"></div>
-      <div class="ic"><div class="il">배우자 은퇴 예정 나이 <span class="iv" id="l-sp-retire">60세</span></div><input type="range" id="sp-retire" min="40" max="90" step="1" value="60"><div class="err" id="err-sp-retire"></div></div>
+      <div class="ic"><div class="il">배우자 은퇴 예정 나이 <span class="iv" id="l-sp-retire">60세</span></div><input type="range" id="sp-retire" min="20" max="90" step="1" value="60"><div class="err" id="err-sp-retire"></div></div>
       <div class="ic save-group" style="grid-column:1/-1">
         <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:9px">은퇴까지 저축 설정</div>
         <div class="g2" style="grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px">
@@ -668,7 +668,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 </div><!-- /container -->
 <div class="footer">
   ⚠️ 본 계산기는 상담용 참고자료입니다. 실제 재무 의사결정은 반드시 공인 재무설계사(CFP)와 상담하세요.<br>
-  정원준 CFP · 몬테카를로 시뮬레이션 1,200회 기반
+  HERITAGE · 몬테카를로 시뮬레이션 1,200회 기반
 </div>
 
 <script>
@@ -1213,13 +1213,32 @@ function deterPath(start,w,ret,yrs,inflowArr=[]){
   return p;
 }
 
-// 시퀀스 리스크: 특정 구간에 고정 수익률 적용
+// 시퀀스 리스크: 특정 구간에 고정 수익률 적용 (인출기 전용)
 function deterPathSeq(start,w,ret,yrs,inflowArr,seqStart,seqDur,seqRet){
   let b=start;const p=[b];
   for(let y=1;y<=yrs;y++){
     const inSeq=(y-1>=seqStart&&y-1<seqStart+seqDur);
     const r=inSeq?seqRet:ret;
     b=b*(1+r/100)-w[y-1];
+    if(inflowArr&&inflowArr[y-1]) b+=inflowArr[y-1];
+    p.push(Math.max(0,b));
+  }
+  return p;
+}
+// 시퀀스 리스크: 적립기(평균수익률) + 인출기(시퀀스 적용) 전체 경로
+// 차트 labA (현재 나이 ~ 사망)와 동일한 길이의 배열 반환
+function deterPathSeqFull(assetNow,wAccum,accumYrs,wRetire,retAccumPct,retPct,chartYrs,inflowArr,seqStart,seqDur,seqRet){
+  let b=assetNow;const p=[b];
+  // 적립기: 평균 수익률 사용
+  for(let y=0;y<accumYrs;y++){
+    b=Math.max(0,b*(1+retAccumPct/100)+(wAccum[y]||0));
+    p.push(b);
+  }
+  // 인출기: seqStart/seqDur 구간에 seqRet 적용
+  for(let y=1;y<=chartYrs;y++){
+    const inSeq=(y-1>=seqStart&&y-1<seqStart+seqDur);
+    const r=inSeq?seqRet:retPct;
+    b=b*(1+r/100)-(wRetire[y-1]||0);
     if(inflowArr&&inflowArr[y-1]) b+=inflowArr[y-1];
     p.push(Math.max(0,b));
   }
@@ -1259,9 +1278,10 @@ function clearSeq(){
 
 function updateSeqChart(){
   if(!_seqChartData||!cA) return;
-  const{assetNow,wAccum,ytr,investable,wA,ret,vol,periodA,inflowArrA}=_seqChartData;
+  const{assetNow,wAccum,ytr,investable,wA,ret,vol,periodA,inflowArrA,retAccum_:ra,chartPeriodA:cpA}=_seqChartData;
+  const chartYrs = cpA || periodA;
   // 팬 차트 데이터셋 재생성
-  const fan=mcPaths(assetNow,wAccum||[],ytr||0,wA,ret,vol,periodA,inflowArrA);
+  const fan=mcPaths(assetNow,wAccum||[],ytr||0,wA,ret,vol,chartYrs,inflowArrA);
   const hex='378ADD';
   const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
   const fillAlpha=`rgba(${r},${g},${b},0.12)`;
@@ -1275,7 +1295,7 @@ function updateSeqChart(){
     const sign=seqRetV>=0?'+':'';
     datasets.push({
       label:`${seqStartV}년차~${seqStartV+seqDurV}년차 ${sign}${seqRetV}%`,
-      data:deterPathSeq(investable,wA,ret,periodA,inflowArrA,seqStartV,seqDurV,seqRetV),
+      data:deterPathSeqFull(assetNow,wAccum||[],ytr||0,wA,ra||retAccum_,ret,chartYrs,inflowArrA,seqStartV,seqDurV,seqRetV),
       borderColor:'#A855F7',borderWidth:2,
       borderDash:[6,3],pointRadius:0,fill:false,tension:.3
     });
@@ -2070,7 +2090,7 @@ function update(){
   renderCFTable('cf-body-a',stagesA,pensionsA,infl,events,retAge);
   // 시나리오A 차트는 본인 사망(mePeriod)까지 표시 — periodA(두 분 중 오래 사는 쪽)와 다를 수 있음
   const chartPeriodA = mePeriod;
-  _seqChartData={assetNow,wAccum,ytr,investable,wA,ret,vol,periodA,inflowArrA};
+  _seqChartData={assetNow,wAccum,ytr,investable,wA,ret,vol,periodA,inflowArrA,retAccum_:retAccum_,chartPeriodA};
   // ── 적립기+인출기 연속 팬 차트 (MC 통합 경로)
   const fanA = mcPaths(assetNow, wAccum, ytr, wA, ret, vol, chartPeriodA, inflowArrA);
   // paths 인덱스: 0..ytr = 적립기, ytr+1..ytr+chartPeriodA = 인출기
@@ -2132,13 +2152,7 @@ function update(){
   }
   if(seqActive && cA){
     const sign=seqRetV>=0?'+':'';
-    const seqFull=deterPathSeq(investable,wA,ret,periodA,inflowArrA,seqStartV,seqDurV,seqRetV);
-    // labA 길이 기준으로 맞춤 (accumPath + 인출기 chartPeriodA)
-    // seqFull은 periodA 길이 → chartPeriodA만큼 slice, accumPath 앞에 붙임
-    const seqRetirePart = seqFull.slice(1, chartPeriodA+1);
-    // labA = 적립기(ytr+1개) + 인출기(chartPeriodA개) → MC p50 적립기 + seq 인출기
-    const seqAccumPart = fan.p50.slice(0, ytr+1);
-    const seqFullWithAccum=[...seqAccumPart, ...seqRetirePart];
+    const seqFullWithAccum=deterPathSeqFull(assetNow,wAccum,ytr,wA,retAccum_,ret,chartPeriodA,inflowArrA,seqStartV,seqDurV,seqRetV);
     cA.data.datasets.push({
       label:`${seqStartV}년차~${seqStartV+seqDurV}년차 ${sign}${seqRetV}%`,
       data:seqFullWithAccum,
