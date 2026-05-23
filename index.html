@@ -1894,28 +1894,30 @@ function update(){
     ? calcSaveFV(spSave, spSaveInc, spSaveRate/100, retAccum/100, spToRet)
     : 0;
 
-  // ── 적립기 연간 순저축 배열 (MC 적립기 시뮬레이션용)
-  // wAccum[i] = i년차에 투입하는 순저축 (양수=유입, 만원)
-  // 구간 A (0 ~ ytr-1):       본인 적립기 — 본인+배우자 저축, 유입/유출, 현금흐름
-  // 구간 B (ytr ~ ytr+spExtra-1): 배우자 잔여 적립기 — 배우자 저축만 (적립기 수익률 유지)
-  // → MC 함수는 wAccum.length 전체를 적립기 수익률로 시뮬레이션
-  const accumTotalYrs = ytr + spExtra; // 전체 적립기 길이 (배우자 은퇴까지)
+  // ── 적립기 연간 순저축 배열 (MC 시뮬레이션용)
+  // 구간 A (0 ~ ytr-1):           본인 적립기 — 본인+배우자 저축, 유입/유출, 현금흐름
+  // 구간 B (ytr ~ accumTotalYrs-1): 배우자 잔여 적립기 — 배우자 저축 - 본인 생활비(순현금흐름)
+  //   → 본인이 이미 은퇴해 생활비를 인출하고 있으므로, 배우자 저축에서 생활비를 차감한 순액
+  //   → MC 함수 전 구간에 적립기 수익률(retAccum) 적용 (일관성 유지)
+  const accumTotalYrs = ytr + spExtra;
   const wAccum = Array.from({length: Math.max(0, accumTotalYrs)}, (_,i)=>{
-    const curAge = age + i;
-    const inAccumA = i < ytr; // 본인 적립기 구간
-    const inAccumB = i >= ytr && i < accumTotalYrs; // 배우자 잔여 적립기 구간
+    const curAge  = age + i;
+    const inAccumA = i < ytr;
+    const inAccumB = i >= ytr && i < accumTotalYrs;
 
-    // 본인 저축: 본인 적립기 구간만
+    // ── 본인 저축 (구간 A만)
     const yr1Save = inAccumA
       ? saveYr + (saveInc>0 ? saveInc*Math.pow(1+saveRate/100,i) : 0)
       : 0;
 
-    // 배우자 저축: 배우자가 아직 은퇴 전인 구간 전체 (A+B 모두 포함)
-    const spYrs = i; // 배우자 나이 = spAge + i (본인과 동시 시작 가정, 실제론 spAge 기준)
-    const yr1SpSave = (hasSp && curAge < spRet)
-      ? spSave + (spSaveInc>0 ? spSaveInc*Math.pow(1+spSaveRate/100,i) : 0) : 0;
+    // ── 배우자 저축 (A+B 전 구간, 배우자 저축 시작 기준 인덱스 사용)
+    // spSaveInc 증액률은 배우자 저축 시작 시점(spAge) 기준으로 몇 년째인지로 계산
+    const spSaveYrIdx = curAge - spAge; // 배우자 저축 경과 연수 (0부터 시작)
+    const yr1SpSave = (hasSp && curAge < spRet && spSaveYrIdx >= 0)
+      ? spSave + (spSaveInc>0 ? spSaveInc*Math.pow(1+spSaveRate/100, spSaveYrIdx) : 0)
+      : 0;
 
-    // 유입/유출/현금흐름: 본인 적립기 구간만 반영 (구간 B는 배우자 저축만)
+    // ── 구간 A: 유입/유출/현금흐름
     const inflowAmt = inAccumA ? inflows
       .filter(e=>Math.floor(e.age)===curAge&&e.age<retAge)
       .reduce((s,e)=>s+e.amt*Math.pow(1+infl/100,e.age-age), 0) : 0;
@@ -1927,7 +1929,29 @@ function update(){
     let fpAmt=0;
     if(inAccumA) fixedPensions.forEach(fp=>{const end=fp.endAge>0?fp.endAge:200;if(curAge>=fp.startAge&&curAge<end&&curAge<retAge)fpAmt+=fp.amt*12;});
 
-    return yr1Save + yr1SpSave + inflowAmt - eventAmt + cfAmt + fpAmt;
+    // ── 구간 B: 본인 생활비 인출 (본인 은퇴 후 배우자 잔여 적립기 동안, 물가 반영)
+    let livingCost = 0;
+    if(inAccumB){
+      const bYr = i - ytr; // 본인 은퇴 후 경과 연도 (0부터)
+      const inflFactor = Math.pow(1+infl/100, bYr+1);
+      // 해당 연도 생활비: 활성화된 부부 단계에서 bYr 시점 생활비 직접 계산
+      let livMon=0;
+      {let cur2=0;const coupleOn=STAGES.filter(s=>!s.solo&&stageState[s.id].on);for(const s of coupleOn){const yrs2=stageState[s.id].yrs;if(bYr<cur2+yrs2){livMon=stageState[s.id].mon;break;}cur2+=yrs2;}if(!livMon&&coupleOn.length)livMon=stageState[coupleOn[coupleOn.length-1].id].mon;}
+      const living = livMon * 12;
+      // 공적연금 (이미 mePstartY/spPstartY 기반 pensionsA는 아직 미정의 → 직접 계산)
+      const mePsY=Math.max(0,meP.sa-retAge), spPsY=hasSp?Math.max(0,spP.sa-retAge):999;
+      let totalP=0;
+      if(bYr>=mePsY) totalP+=meP.amt*12;
+      if(hasSp&&bYr>=spPsY) totalP+=spP.amt*12;
+      const ageAtBYr = retAge + bYr;
+      let extraCF=0;
+      cashflows.forEach(cf=>{const end=cf.endAge>0?cf.endAge:200;if(ageAtBYr>=cf.startAge&&ageAtBYr<end)extraCF+=cf.amt*12;});
+      let extraFP=0;
+      fixedPensions.forEach(fp=>{const end=fp.endAge>0?fp.endAge:200;if(ageAtBYr>=fp.startAge&&ageAtBYr<end)extraFP+=fp.amt*12;});
+      livingCost = living*inflFactor - totalP*inflFactor - extraCF*inflFactor - extraFP;
+    }
+
+    return yr1Save + yr1SpSave + inflowAmt - eventAmt + cfAmt + fpAmt - livingCost;
   });
 
   // ── 적립기(은퇴 전) 현금흐름 반영
@@ -1979,21 +2003,8 @@ function update(){
     return sum + fv;
   }, 0);
 
-  // 배우자 잔여 적립기(본인 은퇴 후 spExtra년) 저축의 FV
-  // — 본인 은퇴 시점 이후 배우자 저축이 retAccum으로 spExtra년 더 성장한 값
-  // — wAccum 연장 구간과 동일한 논리: 적립기 수익률 일관 적용
-  // 배우자 잔여 적립기(본인 은퇴 후 spExtra년) 저축의 FV
-  // calcSaveFV와 동일하게 연말 납입 가정: y번째 납입은 (spExtra-1-y)년 성장
-  let spExtraFV = 0;
-  if(hasSp && spExtra > 0){
-    for(let y = 0; y < spExtra; y++){
-      const spYrIdx = spToRet + y; // 배우자 전체 저축 기준 인덱스
-      const amt = spSave + (spSaveInc>0 ? spSaveInc*Math.pow(1+spSaveRate/100, spYrIdx) : 0);
-      spExtraFV += amt * Math.pow(1+retAccum/100, spExtra - 1 - y); // 연말납입: spExtra-1-y년 성장
-    }
-  }
-
-  const assetAtRet = assetNow * accumGrowth + saveFV + spSaveFV + spExtraFV
+  // assetAtRet: 본인 은퇴 시점 자산 (배우자 잔여 저축 미포함 — 구간 B에서 wAccum으로 처리)
+  const assetAtRet = assetNow * accumGrowth + saveFV + spSaveFV
     + preRetInflows - preRetEvents + preRetCashflows + preRetFixed;
 
   // ── 단계별 버퍼 계산 (핵심 수정)
@@ -2140,7 +2151,7 @@ function update(){
   const gapA = assetAtRet - neededA;
 
   $('sh-a-desc').textContent=`${hasSp?'부부/동반':'본인'} 기준, ${periodA}년 계획. 자산유출 ${events.length}건 · 자산유입 ${inflows.length}건 · 현금흐름 ${cashflows.length}건 · 정액연금 ${fixedPensions.length}건 포함.`;
-  $('a-asset').textContent=fmtW(assetAtRet);$('a-asset-s').textContent=(spExtra>0?accumTotalYrs:ytr)+'년 후 예상'+(spExtra>0?' (배우자 은퇴 시점)':'');
+  $('a-asset').textContent=fmtW(assetAtRet);$('a-asset-s').textContent=ytr+'년 후 예상 (본인 은퇴 시점)'+(spExtra>0?' · 배우자 '+spExtra+'년 추가 적립':' ');
   $('a-rate').textContent=rateA.toFixed(2)+'%';$('a-rate').className='mv '+rateClass(rateA);$('a-rate-s').textContent=rateA<3.5?'안전':rateA<5?'주의':'위험';
   $('a-prob').textContent=probA+'%';$('a-prob').className='mv '+probClass(probA);$('a-prob-s').textContent=probA>=90?'목표 달성':probA>=70?'보완 필요':'재설계 필요';
   $('a-buf').textContent=fmtW(bufAmt);$('a-evt').textContent=fmtW(totalEvtFV);
@@ -2186,36 +2197,62 @@ function update(){
     : null;
   cA = drawFanChart('chart-a', fullP10, fullP50, fullP90, labA, cA, '#378ADD', inheritCurveA);
 
-  // 은퇴 시점 수직선 어노테이션 (플러그인 없이 afterDraw)
-  if(cA && ytr > 0){
-    const origAfterDraw = cA.config.options.plugins?.afterDraw;
+  // 은퇴 시점 수직선 어노테이션 — 본인 은퇴 + 배우자 은퇴(spExtra>0) 구분 표시
+  if(cA){
     if(!cA._retireLineAdded){
       cA._retireLineAdded = true;
-      cA._retireIdx = ytr; // 은퇴 시점 인덱스 (본인 은퇴, spExtra 이전)
-      const origAfter = cA.config.options.animation?.onComplete;
+      cA._retireIdx   = ytr;            // 본인 은퇴 인덱스
+      cA._spRetireIdx = accumTotalYrs;  // 배우자 은퇴 인덱스 (spExtra=0이면 동일)
+      cA._spExtra     = spExtra;
+      cA._retAge      = retAge;
+      cA._spRetAge    = retAge + spExtra;
       Chart.register({
         id:'retireLine_'+Date.now(),
         afterDraw(chart){
           if(chart!==cA) return;
-          const idx = chart._retireIdx;
-          if(idx==null) return;
           const meta = chart.getDatasetMeta(1);
-          if(!meta.data[idx]) return;
-          const x = meta.data[idx].x;
-          const {top,bottom} = chart.chartArea;
+          const {top,bottom,left,right} = chart.chartArea;
           const ctx = chart.ctx;
-          ctx.save();
-          ctx.beginPath();
-          ctx.moveTo(x, top);
-          ctx.lineTo(x, bottom);
-          ctx.strokeStyle='rgba(232,201,126,0.35)';
-          ctx.lineWidth=1.5;
-          ctx.setLineDash([4,3]);
-          ctx.stroke();
-          ctx.fillStyle='rgba(232,201,126,0.7)';
-          ctx.font='10px sans-serif';
-          ctx.fillText('은퇴', x+4, top+12);
-          ctx.restore();
+
+          // 구간 B 음영 (본인 은퇴 ~ 배우자 은퇴): 배우자 잔여 적립기 구간 강조
+          if(chart._spExtra > 0){
+            const idxA = chart._retireIdx;
+            const idxB = chart._spRetireIdx;
+            const xA = meta.data[idxA]?.x;
+            const xB = meta.data[idxB]?.x;
+            if(xA && xB){
+              ctx.save();
+              ctx.fillStyle='rgba(26,200,120,0.06)';
+              ctx.fillRect(xA, top, xB-xA, bottom-top);
+              ctx.restore();
+            }
+          }
+
+          // 본인 은퇴선 (황금색)
+          if(chart._retireIdx > 0){
+            const x = meta.data[chart._retireIdx]?.x;
+            if(x){
+              ctx.save();
+              ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);
+              ctx.strokeStyle='rgba(232,201,126,0.5)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.stroke();
+              ctx.fillStyle='rgba(232,201,126,0.85)';ctx.font='bold 10px sans-serif';
+              ctx.fillText('본인 은퇴('+chart._retAge+'세)', x+3, top+12);
+              ctx.restore();
+            }
+          }
+
+          // 배우자 은퇴선 (초록색, spExtra>0인 경우만)
+          if(chart._spExtra > 0){
+            const x = meta.data[chart._spRetireIdx]?.x;
+            if(x){
+              ctx.save();
+              ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);
+              ctx.strokeStyle='rgba(29,158,117,0.5)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.stroke();
+              ctx.fillStyle='rgba(29,158,117,0.85)';ctx.font='bold 10px sans-serif';
+              ctx.fillText('배우자 은퇴('+chart._spRetAge+'세)', x+3, top+26);
+              ctx.restore();
+            }
+          }
         }
       });
     }
@@ -2233,7 +2270,7 @@ function update(){
   }
   const inflowYears=inflows.filter(e=>e.age>=retAge&&e.age<retAge+periodA).map(e=>Math.floor(e.age-retAge));
   const inflowNote=inflowYears.length>0?`  |  ★ 자산유입: ${[...new Set(inflowYears)].map(y=>y+'년차').join(', ')}`:'';
-  $('note-a').textContent=`▲ ${retAge+mePstartY}세 본인 공적연금 개시`+(hasSp?` · ● ${retAge+spPstartY}세 배우자 공적연금 개시`:'')+inflowNote+(ytr>0?` · 점선: 은퇴 시점(${retAge}세)`:'');
+  $('note-a').textContent=`▲ ${retAge+mePstartY}세 본인 공적연금 개시`+(hasSp?` · ● ${retAge+spPstartY}세 배우자 공적연금 개시`:'')+inflowNote+(ytr>0?` · 황금점선: 본인 은퇴(${retAge}세)`:'')+  (spExtra>0?` · 초록점선: 배우자 은퇴(${retAge+spExtra}세) · 음영: 배우자 잔여적립기 (본인 인출+배우자 저축 병행)`:'') ;
   const taxNote='<div style="font-size:11px;color:var(--text3);margin-top:8px">⚠️ 세금 미반영: 연금소득세·금융소득세 등은 계산에 포함되지 않습니다. 실제 수령액은 세후 기준으로 별도 확인하세요.</div>';
   const runs=1200;
   const failA=Math.round(runs*(1-probA/100));
@@ -2282,10 +2319,10 @@ function update(){
   const wS=buildW(stagesSolo,[{startY:0,amt:sP.total}],soloPeriod,infl,[],retAge+soloDeathY);
   const rateS=assetAtDeath>0?(wS[0]/assetAtDeath)*100:0;
   const probS=Math.round(mcChained(assetNow,wAccum,accumTotalYrs,wA,Math.min(soloDeathY,periodA),wS,soloPeriod,ret,vol,inherit,inflowArrA)*100);
-  const avgWS=wS.reduce((a,b)=>a+b,0)/wS.length;
-  const pvFS=(1-Math.pow(1+netRet/100,-soloPeriod))/(netRet/100);
-  const neededS=avgWS*pvFS+inherit*Math.pow(1+netRet/100,-soloPeriod);
-  const gapS=assetAtDeath-neededS;
+  // gapS: 연도별 직접 할인 (gapA와 동일 방식)
+  const wSPV = wS.reduce((s,w,i) => s + w / Math.pow(1+netRet/100, i+1), 0);
+  const neededS = wSPV + inherit*Math.pow(1+netRet/100,-soloPeriod);
+  const gapS = assetAtDeath - neededS;
   const monS=Math.round(assetAtDeath*(rateS/100)/12+sP.total);
   const diffS=probS-probA;
 
