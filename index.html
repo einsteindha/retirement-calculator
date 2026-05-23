@@ -1586,19 +1586,20 @@ function update(){
   // meYears = 본인 사망까지 잔여 연수 (현재 기준)
   // spYears = 배우자 사망까지 잔여 연수 (현재 기준)
   // → 같은 기준(현재 시점)이므로 직접 비교 가능
+  // meYears/spYears: 블록 밖에 선언 → 독거 시나리오 섹션에서도 접근 가능
+  const meYears = meLife - age;       // 본인: 현재부터 사망까지 잔여 연수
+  const spYears = hasSp ? spLife - spAge : 0; // 배우자: 현재부터 사망까지
   let soloWho, soloDeathY, soloPeriod, soloRetAge;
   if(hasSp){
-    const meYears = meLife - age;        // 본인: 현재부터 사망까지
-    const spYears = spLife - spAge;      // 배우자: 현재부터 사망까지
-    const ytrMe   = retAge - age;        // 본인 적립기
+    const ytrMe = retAge - age;
     if(meYears <= spYears){
       soloWho    = 'sp';
-      soloDeathY = Math.max(0, meYears - ytrMe);  // 본인 은퇴 후 사망까지
-      soloPeriod = Math.max(0, spYears - meYears); // 배우자 독거 기간
+      soloDeathY = Math.max(0, meYears - ytrMe);
+      soloPeriod = Math.max(0, spYears - meYears);
     } else {
       soloWho    = 'me';
-      soloDeathY = Math.max(0, spYears - ytrMe);  // 본인 은퇴 후 배우자 사망까지
-      soloPeriod = Math.max(0, meYears - spYears); // 본인 독거 기간
+      soloDeathY = Math.max(0, spYears - ytrMe);
+      soloPeriod = Math.max(0, meYears - spYears);
     }
     soloRetAge = retAge;
   } else {
