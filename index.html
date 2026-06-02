@@ -668,7 +668,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 </div><!-- /container -->
 <div class="footer">
   ⚠️ 본 계산기는 상담용 참고자료입니다. 실제 재무 의사결정은 반드시 공인 재무설계사(CFP)와 상담하세요.<br>
-  정원준CFP · 몬테카를로 시뮬레이션 1,200회 기반
+  정원준CFP · 몬테카를로 시뮬레이션 3,000회 기반
 </div>
 
 <script>
@@ -1323,7 +1323,7 @@ function randNorm(){
 // ── 적립기(accumYrs) + 인출기(yrs) 연속 몬테카를로
 // wAccum: 적립기 연간 순저축(음수=유입), wRetire: 인출기 연간 순인출
 // retAccum/volAccum: 적립기 수익률·변동성, ret/vol: 인출기
-function mc(start, wAccum, accumYrs, wRetire, ret, vol, yrs, inherit, inflowArr=[], runs=1200){
+function mc(start, wAccum, accumYrs, wRetire, ret, vol, yrs, inherit, inflowArr=[], runs=3000){
   let ok=0;
   const muA=(retAccum_/100)-0.5*Math.pow(volAccum_/100,2), sigA=volAccum_/100;
   const muR=(ret/100)-0.5*Math.pow(vol/100,2),             sigR=vol/100;
@@ -1346,11 +1346,11 @@ function mc(start, wAccum, accumYrs, wRetire, ret, vol, yrs, inherit, inflowArr=
   return ok/runs;
 }
 
-// 1,200개 경로를 저장 → percentile 추출 (팬 차트용)
+// 3,000개 경로를 저장 → percentile 추출 (팬 차트용)
 // 반환: {p10, p50, p90} 각각 연도별 배열 (yrs+1 길이)
 // 적립기(accumYrs) + 인출기(yrs) 연속 팬 차트용
 // 반환 paths 배열: [적립기 0..accumYrs, 인출기 accumYrs+1..accumYrs+yrs] 연속 인덱스
-function mcPaths(start, wAccum, accumYrs, wRetire, ret, vol, yrs, inflowArr=[], runs=1200){
+function mcPaths(start, wAccum, accumYrs, wRetire, ret, vol, yrs, inflowArr=[], runs=3000){
   const muA=(retAccum_/100)-0.5*Math.pow(volAccum_/100,2), sigA=volAccum_/100;
   const muR=(ret/100)-0.5*Math.pow(vol/100,2),             sigR=vol/100;
   const totalYrs = accumYrs + yrs;
@@ -1390,7 +1390,7 @@ function mcPaths(start, wAccum, accumYrs, wRetire, ret, vol, yrs, inflowArr=[], 
 //   probTotal = 전구간(적립+동반+독거) 성공률
 //   condProb  = 동반 성공 전제 하 독거 성공률 = okTotal/okCouple
 //             = 같은 시뮬레이션에서 직접 추출 → 통계적으로 정확, 항상 0~1 보장
-function mcChained(start, wAccum, accumYrs, wA, deathY, wSolo, soloPeriod, ret, vol, inherit, inflowArrA=[], runs=1200){
+function mcChained(start, wAccum, accumYrs, wA, deathY, wSolo, soloPeriod, ret, vol, inherit, inflowArrA=[], runs=3000){
   let okTotal=0, okCouple=0;
   const muA=(retAccum_/100)-0.5*Math.pow(volAccum_/100,2), sigA=volAccum_/100;
   const muR=(ret/100)-0.5*Math.pow(vol/100,2),             sigR=vol/100;
@@ -2199,7 +2199,9 @@ function update(){
     if(!cA._retireLineAdded){
       cA._retireLineAdded = true;
       cA._retireIdx   = ytr;            // 본인 은퇴 인덱스
-      cA._spRetireIdx = hasSp ? (spRet <= retAge ? spRet - age : ytr + spExtra) : -1;
+      // 배우자 은퇴 시점을 본인 나이 기준 인덱스로 변환
+      // 배우자 은퇴나이(spRet) 시점의 본인 나이 = spRet - spAge + age → 인덱스 = spRet - spAge
+      cA._spRetireIdx = hasSp ? (spRet - spAge) : -1;
       cA._spExtra     = spExtra;
       cA._retAge      = retAge;
       cA._spRetAge    = hasSp ? spRet : retAge;  // 실제 배우자 은퇴 나이
@@ -2219,7 +2221,7 @@ function update(){
             const xB = meta.data[idxB]?.x;
             if(xA && xB){
               ctx.save();
-              ctx.fillStyle='rgba(26,200,120,0.06)';
+              ctx.fillStyle='rgba(26,200,120,0.025)';
               ctx.fillRect(xA, top, xB-xA, bottom-top);
               ctx.restore();
             }
@@ -2269,9 +2271,9 @@ function update(){
   const inflowNote=inflowYears.length>0?`  |  ★ 자산유입: ${[...new Set(inflowYears)].map(y=>y+'년차').join(', ')}`:'';
   $('note-a').textContent=`▲ ${retAge+mePstartY}세 본인 공적연금 개시`+(hasSp?` · ● ${retAge+spPstartY}세 배우자 공적연금 개시`:'')+inflowNote+(ytr>0?` · 황금점선: 본인 은퇴(${retAge}세)`:'')+  (hasSp&&spRet!==retAge?` · 초록점선: 배우자 은퇴(${spRet}세)`+(spExtra>0?' · 음영: 배우자 잔여적립기':''):'') ;
   const taxNote='<div style="font-size:11px;color:var(--text3);margin-top:8px">⚠️ 세금 미반영: 연금소득세·금융소득세 등은 계산에 포함되지 않습니다. 실제 수령액은 세후 기준으로 별도 확인하세요.</div>';
-  const runs=1200;
+  const runs=3000;
   const failA=Math.round(runs*(1-probA/100));
-  const probNote=`<div style="font-size:12px;color:var(--text2);margin-top:5px">1,200가지 시장 시나리오 중 <b>${runs-failA}번</b> 성공, <b style="color:var(--red,#D85A30)">${failA}번</b>은 자산 고갈.</div>`;
+  const probNote=`<div style="font-size:12px;color:var(--text2);margin-top:5px">3,000가지 시장 시나리오 중 <b>${runs-failA}번</b> 성공, <b style="color:var(--red,#D85A30)">${failA}번</b>은 자산 고갈.</div>`;
   let msgA='',clsA='';
   if(probA>=90&&rateA<=4){
     clsA='ok';
@@ -2374,7 +2376,7 @@ function update(){
   );
   $('note-s').textContent=`잔여 ${fmtW(assetAtDeath)} | ${soloName} 홀로 ${soloPeriod}년 | 공적연금 월 ${soloPenAmt}만원`;
   const failS=Math.round(runs*(1-probS/100));
-  const probNoteS=`<div style="font-size:12px;color:var(--text2);margin-top:5px">1,200가지 시장 시나리오 중 <b>${runs-failS}번</b> 성공, <b style="color:var(--red,#D85A30)">${failS}번</b>은 자산 고갈.</div>`;
+  const probNoteS=`<div style="font-size:12px;color:var(--text2);margin-top:5px">3,000가지 시장 시나리오 중 <b>${runs-failS}번</b> 성공, <b style="color:var(--red,#D85A30)">${failS}번</b>은 자산 고갈.</div>`;
   // probS  = 처음부터 끝까지 전구간(적립+동반+독거) 성공률
   // condProbS = 동반기를 버텼다는 전제 하에 독거기도 버틸 확률 = probS/probA
   //           → 독거 단계 자체의 실질 위험을 가장 잘 나타냄
@@ -2557,7 +2559,7 @@ update();
       <h2>결과 해석</h2>
 
       <h3>은퇴 계획 성공확률</h3>
-      <p>1,200가지 시장 시나리오 중 자산이 고갈되지 않고 상속 목표까지 달성하는 비율입니다.</p>
+      <p>3,000가지 시장 시나리오 중 자산이 고갈되지 않고 상속 목표까지 달성하는 비율입니다.</p>
       <ul>
         <li><span class="modal-tag modal-tag-ok">95% 이상</span> 안전 — 현재 계획으로 충분합니다.</li>
         <li><span class="modal-tag modal-tag-warn">85~95%</span> 보완 필요 — 지출 조정 또는 추가 저축을 검토하세요.</li>
