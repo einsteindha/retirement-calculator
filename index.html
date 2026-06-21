@@ -574,7 +574,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
 
 <!-- 패널 A -->
 <div class="rp active" id="panel-a">
-  <div class="sh sh-a"><b style="color:#0C3D6E" id="sh-a-title">시나리오 A — 부부/동반 함께 생존</b><br><span id="sh-a-desc" style="color:#185FA5;font-size:12px">—</span></div>
+  <div class="sh sh-a"><b style="color:#0C3D6E" id="sh-a-title">동반 시나리오 — 부부/동반 함께 생존</b><br><span id="sh-a-desc" style="color:#185FA5;font-size:12px">—</span></div>
   <div class="rb">
     <div class="met"><div class="ml">은퇴 시점 예상 자산</div><div class="mv" id="a-asset">—</div><div class="ms" id="a-asset-s">—</div></div>
     <div class="met"><div class="ml">1년차 인출률</div><div class="mv" id="a-rate">—</div><div class="ms" id="a-rate-s">—</div></div>
@@ -585,12 +585,12 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
     <div class="met"><div class="ml">자산 부족/여유</div><div class="mv" id="a-gap">—</div><div class="ms" id="a-gap-s">—</div></div>
   </div>
   <div class="cc">
-    <div style="font-size:13px;font-weight:600;margin-bottom:9px">단계별 현금흐름 요약 — 시나리오 A</div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:9px" id="cf-a-title">단계별 현금흐름 요약 — 동반 시나리오</div>
     <div style="overflow-x:auto"><table class="cf-table"><thead><tr><th>단계</th><th>기간</th><th>나이</th><th>월 생활비</th><th>공적연금·물가연동수입</th><th>월 인출 필요</th></tr></thead><tbody id="cf-body-a"></tbody></table></div>
   </div>
   <div class="cc">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:7px">
-      <span style="font-size:13px;font-weight:600">연도별 자산 — 시나리오 A</span>
+      <span style="font-size:13px;font-weight:600" id="asset-a-title">연도별 자산 — 동반 시나리오</span>
       <div class="leg">
         <div class="li"><div class="ld" style="background:rgba(55,138,221,0.35)"></div>상위 10%</div>
         <div class="li"><div class="ld" style="background:#378ADD"></div>중앙값</div>
@@ -625,7 +625,7 @@ input[type=range]{width:100%;margin-top:2px;accent-color:var(--blue)}
       </div>
       <div style="font-size:11px;color:var(--text3);margin-top:6px" id="seq-preview">— 값을 입력하고 적용 버튼을 누르세요</div>
     </div>
-    <div style="position:relative;width:100%;height:260px"><canvas id="chart-a" role="img" aria-label="시나리오A 자산 잔액"></canvas></div>
+    <div style="position:relative;width:100%;height:260px"><canvas id="chart-a" role="img" aria-label="동반 시나리오 자산 잔액"></canvas></div>
     <div style="font-size:11px;color:var(--text3);margin-top:6px" id="note-a"></div>
   </div>
   <div class="adv" id="adv-a"></div>
@@ -1843,22 +1843,26 @@ function update(){
   // ── 배우자 유무에 따른 표현 동적 업데이트
   const lbl = hasSp ? {
     tabA:     '부부/동반 함께',
-    shA:      '시나리오 A — 부부/동반 함께 생존',
+    shA:      '동반 시나리오 — 부부/동반 함께 생존',
     cmpA:     '부부/동반 함께',
-    sec5:     '5 · 공적연금 수령 전략 — 시나리오 A (부부 함께)',
+    sec5:     '5 · 공적연금 수령 전략 — 동반 시나리오 (부부 함께)',
     sec7:     '각 단계를 ON/OFF하고 기간과 월 생활비를 입력하세요. 부부 단계 합계는 <b>부부 은퇴 기간</b>을, 독거 단계 합계는 <b>독거 기간</b>을 초과할 수 없습니다.',
     coupleHd: '👫 동반 인출기',
     summaryCouple: `부부 단계 합계`,
     errorCouple:   `부부 단계`,
+    cfA:      '단계별 현금흐름 요약 — 동반 시나리오',
+    assetA:   '연도별 자산 — 동반 시나리오',
   } : {
     tabA:     '본인',
-    shA:      '시나리오 A — 본인 기준',
+    shA:      '본인 시나리오 — 본인 기준',
     cmpA:     '본인',
     sec5:     '5 · 공적연금 수령 전략',
     sec7:     '각 단계를 ON/OFF하고 기간과 월 생활비를 입력하세요. 단계 합계는 <b>은퇴 기간</b>을 초과할 수 없습니다.',
     coupleHd: '📋 인출기',
     summaryCouple: `인출 단계 합계`,
     errorCouple:   `인출 단계`,
+    cfA:      '단계별 현금흐름 요약 — 본인 시나리오',
+    assetA:   '연도별 자산 — 본인 시나리오',
   };
   const _el = id => document.getElementById(id);
   if(_el('tab-a-title'))   _el('tab-a-title').textContent   = lbl.tabA;
@@ -1867,6 +1871,8 @@ function update(){
   if(_el('pt-sec5'))       _el('pt-sec5').textContent       = lbl.sec5;
   if(_el('sn-sec7'))       _el('sn-sec7').innerHTML         = lbl.sec7;
   if(_el('stage-couple-label')) _el('stage-couple-label').textContent = lbl.coupleHd;
+  if(_el('cf-a-title'))    _el('cf-a-title').textContent    = lbl.cfA;
+  if(_el('asset-a-title')) _el('asset-a-title').textContent = lbl.assetA;
   $('tab-a-p').textContent=periodA+'년 계획';
   const tabS=$('tab-s');
   if(tabS){
