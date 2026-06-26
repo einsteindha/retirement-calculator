@@ -269,6 +269,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-ra
   .asset-row>input:last-child,.asset-header>span:last-child{display:none}
   .cmp3{grid-template-columns:1fr}.cmp3-sep{display:none}
 }
+@media(max-width:768px){.mobile-hide{display:none!important}}
 </style>
 </head>
 <body>
@@ -278,9 +279,9 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-ra
     <div class="header-sub">은퇴 인출 시뮬레이터 · 몬테카를로 시뮬레이션 기반</div>
   </a>
   <div class="hdr-actions">
-    <button class="hdr-btn" onclick="saveState()" title="현재 입력값을 JSON 파일로 저장">💾 저장</button>
-    <button class="hdr-btn" onclick="loadState()" title="저장된 JSON 파일 불러오기">📂 불러오기</button>
-    <button class="hdr-btn" onclick="doPrint()" title="결과 인쇄">🖨️ 출력</button>
+    <button class="hdr-btn mobile-hide" onclick="saveState()" title="현재 입력값을 JSON 파일로 저장">💾 저장</button>
+    <button class="hdr-btn mobile-hide" onclick="loadState()" title="저장된 JSON 파일 불러오기">📂 불러오기</button>
+    <button class="hdr-btn" onclick="_mPrint(doPrint)" title="결과 인쇄">🖨️ 출력</button>
     <button class="hdr-btn hdr-btn-danger" onclick="resetState()" title="모든 입력값 초기화">↺ 초기화</button>
     <div class="hdr-sep"></div>
     <button class="hdr-btn" onclick="openManual()">📖 설명서</button>
@@ -2891,6 +2892,17 @@ function closeManual(){ document.getElementById('manual-modal').classList.remove
 function closeManualOutside(e){ if(e.target===document.getElementById('manual-modal')) closeManual(); }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeManual(); });
 (function(){function _rp(e){var v=parseFloat(e.value),mn=parseFloat(e.min)||0,mx=parseFloat(e.max)||100;if(mx!==mn)e.style.setProperty('--pct',((v-mn)/(mx-mn)*100).toFixed(1)+'%');}document.querySelectorAll('input[type=range]').forEach(_rp);document.addEventListener('input',function(e){if(e.target.type==='range')_rp(e.target);});})();
+function _mPrint(fn){
+  if(window.matchMedia('(max-width:768px)').matches){
+    var t=document.createElement('div');
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:14px 22px;border-radius:10px;font-size:14px;z-index:9999;text-align:center;max-width:280px;line-height:1.6;box-shadow:0 4px 20px rgba(0,0,0,.3)';
+    t.innerHTML='🖨️ 출력·PDF 저장은<br><b>PC 웹 브라우저</b>에서 이용해 주세요.';
+    document.body.appendChild(t);
+    setTimeout(function(){t.style.transition='opacity .4s';t.style.opacity='0';setTimeout(function(){t.remove();},400);},3000);
+    return;
+  }
+  fn();
+}
 </script>
 </body>
 </html>
