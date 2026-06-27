@@ -2656,8 +2656,8 @@ function doPrint(){
 }
 
 // A4 인쇄 가능 높이 (297mm - 상하 10mm 여백 = 277mm ≈ 1047 CSS px)에서
-// 헤더 높이 등 여유를 빼고 950을 목표로 각 패널을 한 페이지에 맞게 축소
-const _PRINT_PAGE_H = 950;
+// 헤더 높이 등 여유를 빼고 1000을 목표로 각 패널을 한 페이지에 맞게 축소
+const _PRINT_PAGE_H = 1000;
 
 window.addEventListener('beforeprint', function(){
   // 차트를 인쇄 CSS 적용 후 크기로 리사이즈
@@ -2694,7 +2694,7 @@ window.addEventListener('afterprint', function(){
   s.textContent=`
 @media print{
   @page{margin:10mm;size:A4 portrait}
-  html,body{overflow:visible!important;height:auto!important;background:#faf8f4!important;font-size:12px!important}
+  html,body{overflow:visible!important;height:auto!important;background:#faf8f4!important;font-size:13px!important}
   /* 헤더 */
   .header{position:static!important;padding:5px 12px!important;border-bottom:1px solid #ddd!important}
   .hdr-actions{display:none!important}
@@ -2714,22 +2714,24 @@ window.addEventListener('afterprint', function(){
   /* 지표 7개 한 줄 */
   .rb{grid-template-columns:repeat(7,1fr)!important;gap:3px!important;margin-bottom:6px!important}
   .met{padding:5px 4px!important}
-  .ml{font-size:8.5px!important;line-height:1.3!important;margin-bottom:2px!important;white-space:normal!important}
-  .mv{font-size:13px!important;line-height:1.2!important}
-  .ms{font-size:8px!important;margin-top:1px!important}
+  .ml{font-size:10px!important;line-height:1.3!important;margin-bottom:2px!important;white-space:normal!important}
+  .mv{font-size:14px!important;line-height:1.2!important}
+  .ms{font-size:9px!important;margin-top:1px!important}
   /* 시퀀스 리스크 입력 숨김 */
   .seq-ctrl-wrap{display:none!important}
   .seq-leg{display:none!important}
-  /* 차트 */
+  /* 차트: overflow:hidden으로 캔버스가 컨테이너를 넘어 아래 텍스트를 덮는 현상 방지 */
   canvas{max-width:100%!important}
-  .chart-wrap{height:150px!important}
+  .chart-wrap{height:150px!important;overflow:hidden!important}
   .cc{break-inside:avoid;margin-bottom:6px!important;padding:8px!important}
   /* 현금흐름 테이블 */
-  .cf-table{font-size:10px!important}
-  .cf-table th,.cf-table td{padding:3px 4px!important}
+  .cf-table{font-size:11px!important}
+  .cf-table th,.cf-table td{padding:4px 5px!important}
   /* 조언 박스 */
-  .adv{break-inside:avoid;font-size:11px!important;padding:8px 10px!important;margin-bottom:6px!important}
-  .sh{padding:7px 10px!important;font-size:11px!important;margin-bottom:8px!important}
+  .adv{break-inside:avoid;font-size:12px!important;padding:8px 10px!important;margin-bottom:6px!important}
+  .sh{padding:7px 10px!important;font-size:12px!important;margin-bottom:8px!important}
+  /* 시퀀스 리스크 시뮬레이션 결과 */
+  #seq-result-a,#seq-result-s{break-inside:avoid;margin-bottom:6px!important;font-size:11px!important}
   /* 입력 영역: 인터랙티브 요소 숨김 */
   .split-left input[type=range]{display:none!important}
   .split-left .slider-num-row{display:none!important}
