@@ -229,7 +229,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-ra
 .sh-c{background:#fef5e4;border-left:3px solid var(--amber)}
 .rb{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:1.2rem}
 .met{background:var(--bg2);border-radius:var(--radius);padding:11px 13px}
-.ml{font-size:12px;color:var(--text2);margin-bottom:3px}.mv{font-size:20px;font-weight:700;line-height:1.2}.ms{font-size:11px;color:var(--text3);margin-top:3px}
+.ml{font-size:14px;color:var(--text2);margin-bottom:3px}.mv{font-size:22px;font-weight:700;line-height:1.2}.ms{font-size:13px;color:var(--text3);margin-top:3px}
 .ok{color:var(--green)}.warn{color:var(--amber)}.danger{color:var(--red)}
 .cc{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:13px;margin-bottom:1.2rem}
 .leg{display:flex;gap:11px;flex-wrap:wrap}
@@ -643,7 +643,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-ra
       </div>
       <div style="font-size:11px;color:var(--text3);margin-top:6px" id="seq-preview">— 값을 입력하고 적용 버튼을 누르세요</div>
     </div>
-    <div class="chart-wrap" style="position:relative;width:100%;height:260px"><canvas id="chart-a" role="img" aria-label="동반 시나리오 자산 잔액"></canvas></div>
+    <div class="chart-wrap" style="position:relative;width:100%;height:390px"><canvas id="chart-a" role="img" aria-label="동반 시나리오 자산 잔액"></canvas></div>
     <div style="font-size:11px;color:var(--text3);margin-top:6px" id="note-a"></div>
   </div>
   <div class="adv" id="adv-a"></div>
@@ -674,7 +674,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-ra
   <div class="cc">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:7px"><span style="font-size:13px;font-weight:600" id="chart-s-title">독거자 자산</span><div class="leg"><div class="li"><div class="ld" style="background:rgba(124,92,191,0.3)"></div>상위 10%</div><div class="li"><div class="ld" style="background:#7c5cbf"></div>중앙값</div><div class="li"><div class="ld" style="background:rgba(124,92,191,0.3)"></div>하위 10%</div>
         <div class="li" id="inherit-leg-s" style="display:none"><div class="ld" style="background:var(--gold);border-top:2px dashed var(--gold);height:0"></div>상속 목표</div></div></div>
-    <div class="chart-wrap" style="position:relative;width:100%;height:240px"><canvas id="chart-s" role="img" aria-label="독거 시나리오 자산 잔액"></canvas></div>
+    <div class="chart-wrap" style="position:relative;width:100%;height:360px"><canvas id="chart-s" role="img" aria-label="독거 시나리오 자산 잔액"></canvas></div>
     <div style="font-size:11px;color:var(--text3);margin-top:6px" id="note-s"></div>
   </div>
   <div class="adv" id="adv-s"></div>
@@ -2729,8 +2729,8 @@ window.addEventListener('afterprint', function(){
   // 차트 컨테이너 및 크기 원복
   var elA=document.getElementById('chart-a'), wrapA=elA&&elA.parentElement;
   var elS=document.getElementById('chart-s'), wrapS=elS&&elS.parentElement;
-  if(wrapA) wrapA.style.height='260px';
-  if(wrapS) wrapS.style.height='240px';
+  if(wrapA) wrapA.style.height='390px';
+  if(wrapS) wrapS.style.height='360px';
   setTimeout(function(){
     if(cA) try{cA.resize();}catch(e){}
     if(cS) try{cS.resize();}catch(e){}
